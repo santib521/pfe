@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบ HIS: สรุปและแนะนำผู้ป่วยโดย AI - FDE_V18 (Spinner Confirmed)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles & Typography */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        .container-content {
+            max-width: 1200px;
+            margin: auto;
+            padding: 1rem;
+        }
+        .paper-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .section-header {
+            border-left: 5px solid #0056b3;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .input-group textarea, .input-group input, .input-group select {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .input-group textarea:focus, .input-group input:focus, .input-group select:focus {
+            border-color: #3b82f6;
+            ring: 2px;
+            ring-color: #3b82f6;
+        }
+        .visit-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: box-shadow 0.3s;
+        }
+        .visit-card:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        /* Styles for consistent PFE output (Card style) */
+        .pfe-section-card {
+            background-color: #f0fdfa; /* Teal-50 */
+            border: 1px solid #99f6e4; /* Teal-200 */
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        /* Styles for Visit Summary Table (Raw Data) */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .summary-table th, .summary-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+        .summary-table th {
+            width: 20%; 
+            font-weight: 700;
+            background-color: #f3f4f6; 
+            color: #1f2937; 
+        }
+        .summary-table td {
+            width: 80%;
+            background-color: #ffffff;
+            color: #374151; 
+            line-height: 1.6;
+        }
+        /* Style for the main 3-visit history table */
+        #visit-history-table th {
+            text-align: center;
+            background-color: #2563eb; 
+            color: white;
+            padding: 12px 15px;
+            font-size: 1rem;
+        }
+        #visit-history-table td {
+            padding: 10px;
+            background-color: white;
+        }
+
+        /* Styles for Score Table (5 columns) */
+        .score-table th, .score-table td {
+            white-space: nowrap;
+            padding: 8px 6px;
+        }
+        .score-date-input {
+            width: 100%;
+            padding: 2px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        /* Styles for Self-Care and Medication Tables */
+        .general-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            border: 1px solid #06b6d4; /* Cyan-500 for distinction */
+            font-size: 0.9rem;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .general-table th, .general-table td {
+            border: 1px solid #2dd4bf; /* Teal-400 */
+            padding: 8px 12px;
+            text-align: left; 
+            vertical-align: top;
+        }
+        .general-table th {
+            background-color: #06b6d4; /* Cyan-500 */
+            color: white;
+            font-weight: 700;
+            text-align: center; 
+        }
+        .general-table tr:nth-child(even) td {
+            background-color: #f0f9ff; /* Blue-50 */
+        }
+        /* Medication Table Specific Style (Blue Header) */
+        .medication-table th {
+            background-color: #1d4ed8; /* Blue-700 */
+            color: white;
+            font-weight: 700;
+            text-align: center; 
+        }
+        .medication-table tr:nth-child(even) td {
+            background-color: #e0f2fe; /* Sky-100 */
+        }
+        .medication-table td {
+            text-align: center;
+        }
+
+        /* === NEW: Editable Content Focus Style === */
+        [contenteditable] {
+            cursor: text;
+            min-height: 20px;
+            transition: all 0.1s ease-in-out;
+        }
+        [contenteditable]:hover {
+            outline: 1px dashed #9ca3af; /* Gray-400 */
+        }
+        [contenteditable]:focus {
+            outline: 2px dashed #10b981; /* Emerald-500 */
+            background-color: #f0fdfa; /* Teal-50 - subtle change */
+            box-shadow: 0 0 0 1px #10b981;
+        }
+        /* === END NEW === */
+
+        
+        /* Plan & Goal Specific Styles (Kept from V10 for consistency) */
+        .plan-header-card {
+            background-color: #fef2f2; 
+            border: 1px solid #fca5a5; 
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .plan-goal {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #dc2626; 
+        }
+        .plan-progress {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #fecaca;
+            margin: 0.5rem 0 1rem 0;
+            overflow: hidden;
+        }
+        .plan-progress-bar {
+            height: 100%;
+            background-color: #ef4444; 
+            transition: width 1s;
+        }
+        .plan-phase-card {
+            background-color: #fff7ed; 
+            border: 1px solid #fed7aa; 
+            padding: 0.75rem;
+            border-radius: 6px;
+            min-height: 120px;
+        }
+        .plan-phase-title {
+            font-weight: 700;
+            color: #c2410c; 
+            margin-bottom: 0.25rem;
+        }
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .container-content {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .paper-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            /* HIDE editable cues when printing */
+            [contenteditable]:hover, [contenteditable]:focus {
+                outline: none !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+            }
+            .pfe-section-card {
+                 box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+<div id="app" class="container-content">
+
+    <h1 class="text-3xl font-bold text-center my-6 text-blue-700" id="app-title">ระบบจำลอง: สรุปและแนะนำผู้ป่วยโดย AI (Ortho Focus)</h1>
+    
+    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4 no-print" role="alert">
+      <strong class="font-bold">อัปเดต:</strong> 
+      <span class="block sm:inline">โค้ดนี้ใช้ **ข้อมูลตัวอย่าง** เป็นกรณีการผ่าตัดเปลี่ยนข้อเข่าเทียม (TKA) และรองรับการเลือก **ภาษาของเอกสาร** (เพิ่ม อาหรับ, จีน, ญี่ปุ่น)</span>
+    </div>
+
+    <div id="input-form" class="paper-container mb-8 no-print">
+        <form id="patient-form" class="space-y-8">
+
+            <div class="border-b pb-4">
+                <div class="section-header">
+                    <h2 class="text-xl font-bold text-blue-600" id="input-header">1. ข้อมูลพื้นฐานผู้ป่วย (Patient History)</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="input-group">
+                        <label for="name" id="label-name">ชื่อ-นามสกุล / HN</label>
+                        <input type="text" id="name" name="name" class="w-full" value="นางสมศรี อดทน (HN: 12346)" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="age" id="label-age">อายุ / เพศ / BMI</label>
+                        <input type="text" id="age" name="age" class="w-full" value="72 ปี / หญิง / BMI 31 (158cm, 78kg)">
+                    </div>
+                    <div class="input-group">
+                        <label for="documentLanguage" id="label-language">ภาษาของเอกสาร (Document Language)</label>
+                        <select id="documentLanguage" name="documentLanguage" class="w-full">
+                            <option value="th" selected>ไทย (Thai)</option>
+                            <option value="en">อังกฤษ (English)</option>
+                            <option value="ar">อาหรับ (Arabic)</option>
+                            <option value="zh">จีน (Chinese)</option>
+                            <option value="ja">ญี่ปุ่น (Japanese)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="underlying" id="label-underlying">โรคประจำตัว (Underlying)</label>
+                        <input type="text" id="underlying" name="underlying" class="w-full" value="ความดันโลหิตสูง (HPN), เบาหวาน (DM type 2) ควบคุมได้ดี">
+                    </div>
+                    <div class="input-group">
+                        <label for="allergy" id="label-allergy">ประวัติการแพ้ยา/อาหาร (Allergy)</label>
+                        <textarea id="allergy" name="allergy" rows="2" class="w-full">Diclofenac (ผื่นขึ้น), Sulfa drugs</textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="pastHistory" id="label-pastHistory">ประวัติการเจ็บป่วย/ผ่าตัดที่สำคัญ (Past/Surgical History)</label>
+                        <textarea id="pastHistory" name="pastHistory" rows="2" class="w-full">เคยผ่าตัดไส้ติ่งเมื่อ 20 ปีก่อน</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="section-header">
+                    <h2 class="text-xl font-bold text-blue-600">2. ประวัติการรักษา 3 ครั้งล่าสุด</h2>
+                    <p class="text-sm text-gray-500">วันที่ในการรักษาถูกกำหนดโดยวันที่ในตารางคะแนนด้านล่าง</p>
+                </div>
+                
+                <div id="visit-3" class="visit-card bg-blue-50 border-blue-300">
+                    <h3 class="text-lg font-bold mb-2 text-blue-700 flex justify-between items-center">
+                        การรักษาครั้งล่าสุด (3 เดือนหลังผ่าตัด)
+                        <input type="date" id="visitDate_3_input" name="visitDate_3" class="p-1 text-sm border-blue-500" value="2025-12-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI (อาการสำคัญ/ประวัติปัจจุบัน)</label>
+                            <textarea name="ccPi_3" rows="2" class="w-full">ปวด/ตึงเข่าซ้ายเล็กน้อย มีแผลผ่าตัดแห้งดี เดินได้คล่องขึ้น แต่ต้องการติดตามผลการทำกายภาพบำบัด</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE (ตรวจร่างกาย) / Vital Sign</label>
+                            <textarea name="pe_3" rows="2" class="w-full">BP: 130/80 mmHg. Left knee: Wound Clean, Dry, Intact (CDI). ROM: 0-100 deg. VAS Pain: 3/10. V/S stable.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis (วินิจฉัยโรค)</label>
+                            <textarea name="diag_3" rows="2" class="w-full">Z96.65 Total Knee Arthroplasty (TKA Left) Post-op 3 months</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine (ยาที่ได้รับ) - <span class="text-red-500 font-semibold">แยกยาตามเวลาในตาราง</span></label>
+                            <textarea name="med_3" rows="2" class="w-full">เช้า: Amlodipine 5 mg, Bromhexine 8 mg, Omeprazole 20 mg (ก่อนอาหาร), Glucosamine Sulfate
+กลางวัน: Bromhexine 8 mg
+เย็น: Bromhexine 8 mg
+ก่อนนอน: Cetirizine 10 mg
+ยา PRN: Paracetamol 500 mg</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_3" rows="2" class="w-full">X-ray Left Knee: TKA L in good alignment. Cement intact.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_3" rows="2" class="w-full">อาการปวดลดลงมาก ROM ดีขึ้นจาก 0-80 เป็น 0-100 องศา คะแนน WOMAC ลดลงเหลือ 35 จุด</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_3" rows="1" class="w-full">แนะนำทำกายภาพบำบัด (PT) ต่อเนื่องเพื่อเพิ่มกำลังกล้ามเนื้อ และนัดติดตามอาการใน 3 เดือน</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="visit-2" class="visit-card bg-gray-50">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-center">
+                        การรักษาครั้งก่อน 2 (วันผ่าตัด)
+                        <input type="date" id="visitDate_2_input" name="visitDate_2" class="p-1 text-sm border-gray-400" value="2025-09-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI</label>
+                            <textarea name="ccPi_2" rows="2" class="w-full">มาตามนัดเพื่อเข้ารับการผ่าตัดเปลี่ยนข้อเข่าเทียมซ้าย (TKA L) โดยมีอาการปวดรุนแรงก่อนหน้า</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE / Vital Sign</label>
+                            <textarea name="pe_2" rows="2" class="w-full">Pre-op checklist completed. V/S stable. Consult Anesthesia.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis</label>
+                            <textarea name="diag_2" rows="2" class="w-full">M17.1 Severe Osteoarthritis of left knee (OA Knee L) - Elective TKA Plan</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine</label>
+                            <textarea name="med_2" rows="2" class="w-full">N/A (อยู่ในขั้นตอน Pre-op)</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_2" rows="2" class="w-full">Lab Pre-op: WNL. ECG: WNL. Chest X-ray: Unremarkable. Consent signed.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_2" rows="2" class="w-full">ได้รับการผ่าตัด TKA Left สำเร็จตามแผน ไม่มีภาวะแทรกซ้อนระหว่างการผ่าตัด ส่งต่อ PT</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_2" rows="1" class="w-full">เริ่มทำกายภาพบำบัดหลังผ่าตัดทันที (Day 1 Post-op) เพื่อฟื้นฟูการเคลื่อนไหว</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="visit-1" class="visit-card bg-gray-50">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-center">
+                        การรักษาครั้งก่อน 1 (ประเมินก่อนผ่าตัด)
+                        <input type="date" id="visitDate_1_input" name="visitDate_1" class="p-1 text-sm border-gray-400" value="2025-06-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI</label>
+                            <textarea name="ccPi_1" rows="2" class="w-full">ปวดเข่าซ้ายมาก 6 เดือน ปวดตลอดเวลา เดินได้ไม่เกิน 100 เมตร ยาแก้ปวดไม่ช่วย</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE / Vital Sign</label>
+                            <textarea name="pe_1" rows="2" class="w-full">BP: 140/90 mmHg. Left knee: Swelling (++), Warmth (+). Tenderness at joint line. ROM: 0-90 deg. VAS: 8/10.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis</label>
+                            <textarea name="diag_1" rows="2" class="w-full">M17.1 Primary OA Knee L (Severe)</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine</label>
+                            <textarea name="med_1" rows="2" class="w-full">Acetaminophen 500 mg (1x1 prn pain), Glucosamine Sulfate (1x1), Amlodipine 5 mg (1x1)</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_1" rows="2" class="w-full">X-ray Left Knee: Joint space narrowing Grade 4. Bony destruction. Bone stock good.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_1" rows="2" class="w-full">อาการปวดไม่ดีขึ้นหลังใช้ยา conservative 3 เดือน ตัดสินใจวางแผนผ่าตัดเปลี่ยนข้อเข่าเทียม (TKA)</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_1" rows="1" class="w-full">ส่งทำ Lab Pre-op และนัดวันผ่าตัดใน 3 เดือน</textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="border-b pb-4 mt-8">
+                <div class="section-header">
+                    <h2 class="text-xl font-bold text-blue-600">3. คะแนนการประเมินทางออร์โธปิดิกส์ (Orthopedic Assessment Scores)</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm general-table score-table">
+                        <thead>
+                            <tr>
+                                <th class="w-1/5">รายการ</th>
+                                <th class="w-1/5">Pre-Op (1)</th>
+                                <th class="w-1/5">Pre-Op (2)</th>
+                                <th class="w-1/5">Post-Op (1)</th>
+                                <th class="w-1/5">Post-Op (2)</th>
+                                <th class="w-1/5">เป้าหมาย</th>
+                            </tr>
+                            <tr>
+                                <th>วันที่ประเมิน</th>
+                                <td><input type="date" id="score_date_preop1" name="score_date_preop1" class="score-date-input" value="2025-06-15"></td>
+                                <td><input type="date" id="score_date_preop2" name="score_date_preop2" class="score-date-input" value="2025-09-15"></td>
+                                <td><input type="date" id="score_date_postop1" name="score_date_postop1" class="score-date-input" value="2025-12-15"></td>
+                                <td><input type="date" name="score_date_postop2" class="score-date-input" value="2026-03-15"></td>
+                                <td><input type="date" name="score_date_postop3" class="score-date-input" value="2026-06-15"></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1. WOMAC Score (เต็ม 96, ต่ำ=ดี)</td>
+                                <td><input type="text" name="score_womac_preop1" class="w-full p-1" value="80"></td>
+                                <td><input type="text" name="score_womac_preop2" class="w-full p-1" value="75"></td>
+                                <td><input type="text" name="score_womac_postop1" class="w-full p-1" value="35"></td>
+                                <td><input type="text" name="score_womac_postop2" class="w-full p-1" value="20"></td>
+                                <td><input type="text" name="score_womac_postop3" class="w-full p-1" value="15"></td>
+                            </tr>
+                            <tr>
+                                <td>2. VAS Pain Score (เต็ม 10, ต่ำ=ดี)</td>
+                                <td><input type="text" name="score_vas_preop1" class="w-full p-1" value="8"></td>
+                                <td><input type="text" name="score_vas_preop2" class="w-full p-1" value="8"></td>
+                                <td><input type="text" name="score_vas_postop1" class="w-full p-1" value="3"></td>
+                                <td><input type="text" name="score_vas_postop2" class="w-full p-1" value="2"></td>
+                                <td><input type="text" name="score_vas_postop3" class="w-full p-1" value="1"></td>
+                            </tr>
+                            <tr>
+                                <td>3. ODI Score (เต็ม 100, ต่ำ=ดี)</td>
+                                <td><input type="text" name="score_odi_preop1" class="w-full p-1" value="40"></td>
+                                <td><input type="text" name="score_odi_preop2" class="w-full p-1" value="45"></td>
+                                <td><input type="text" name="score_odi_postop1" class="w-full p-1" value="25"></td>
+                                <td><input type="text" name="score_odi_postop2" class="w-full p-1" value="15"></td>
+                                <td><input type="text" name="score_odi_postop3" class="w-full p-1" value="10"></td>
+                            </tr>
+                            <tr>
+                                <td>4. Others (ระบุชื่อ)</td>
+                                <td><input type="text" name="score_others_preop1" class="w-full p-1" value="N/A"></td>
+                                <td><input type="text" name="score_others_preop2" class="w-full p-1" value="N/A"></td>
+                                <td><input type="text" name="score_others_postop1" class="w-full p-1" value="N/A"></td>
+                                
+                                <td><input type="text" name="score_others_postop2" class="w-full p-1" value="N/A"></td>
+                                <td><input type="text" name="score_others_postop3" class="w-full p-1" value="N/A"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-8">
+                <button type="submit" id="generate-btn" class="w-full md:w-auto flex items-center justify-center py-3 px-8 border border-transparent rounded-full shadow-lg text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                    <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    สร้างสรุปและคำแนะนำโดย AI
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="output-section" class="hidden">
+        <h2 class="text-2xl font-bold text-center my-6 text-indigo-700" id="output-header">ผลลัพธ์เอกสารที่สร้างโดยระบบ</h2>
+
+        <div class="flex justify-center mb-6 no-print space-x-4">
+            <button id="print-btn" class="flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                พิมพ์เอกสารทั้งหมด
+            </button>
+        </div>
+
+        <div id="visit-summary-doc" class="paper-container mb-8 border-t-8 border-indigo-500">
+            <h3 class="text-xl font-bold text-indigo-700 mb-4 border-b pb-2" id="summary-doc-title">สรุปประวัติการรักษา 3 ครั้งล่าสุด (Raw Data)</h3>
+            <div id="summary-content" class="text-base space-y-3">
+                <p class="text-gray-500">กดปุ่ม **"สร้างสรุปและคำแนะนำโดย AI"** เพื่อดูผลลัพธ์</p>
+            </div>
+        </div>
+        
+        <div id="pfe-doc" class="paper-container mb-8 border-t-8 border-teal-500">
+            <h3 class="text-xl font-bold text-teal-700 mb-4 border-b pb-2" id="pfe-doc-title">เอกสารให้ความรู้แก่ผู้ป่วย (Patient Education - PFE)</h3>
+            <div id="pfe-content" class="text-base space-y-3">
+                <p class="text-gray-500">กดปุ่ม **"สร้างสรุปและคำแนะนำโดย AI"** เพื่อดูผลลัพธ์</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------------------------------------------------------
+    // !!! สำคัญมาก: กรุณาเปลี่ยน API Key ตัวอย่างนี้เป็น Key จริงของคุณ ที่ได้จาก Google AI Studio !!!
+    // --------------------------------------------------------------------------------------------------
+    const apiKey = "AIzaSyBX4x_sffJXdjp5tpQGpTgMbNLipDGKOC8"; // Placeholder. Please use your actual key here.
+
+    // --- DOM Elements ---
+    const patientForm = document.getElementById('patient-form');
+    const outputSection = document.getElementById('output-section');
+    const summaryContent = document.getElementById('summary-content');
+    const pfeContent = document.getElementById('pfe-content');
+    const generateBtn = document.getElementById('generate-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const printBtn = document.getElementById('print-btn');
+    const documentLanguageSelect = document.getElementById('documentLanguage');
+
+
+    // --- Gemini API Configuration (Model: gemini-2.5-flash for stability) ---
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    // --- Localization Text Mapping (Updated with ar, zh, ja, and meal times) ---
+    function getLocalizedText(key, lang) {
+        const texts = {
+            // New stable keys for meal times
+            meal_morning: { th: 'เช้า', en: 'Morning', ar: 'الصباح', zh: '早上', ja: '朝' },
+            meal_noon: { th: 'กลางวัน', en: 'Noon', ar: 'الظهيرة', zh: '中午', ja: '昼' },
+            meal_evening: { th: 'เย็น', en: 'Evening', ar: 'المساء', zh: '晚上', ja: '夕方' },
+            meal_bedtime: { th: 'ก่อนนอน', en: 'Bedtime', ar: 'قبل النوم', zh: '睡前', ja: '就寝前' },
+            
+            // Other Text Keys
+            app_title: {
+                th: "ระบบจำลอง: สรุปและแนะนำผู้ป่วยโดย AI (Ortho Focus)",
+                en: "Simulator: AI-Generated Patient Summary and Recommendations (Ortho Focus)",
+                ar: "محاكي: ملخص المريض وتوصيات الذكاء الاصطناعي (تركيز العظام)",
+                zh: "模拟器：AI生成的患者总结和建议（骨科重点）",
+                ja: "シミュレーター：AIによる患者サマリーと推奨事項を生成"
+            },
+            input_header: {
+                th: "1. ข้อมูลพื้นฐานผู้ป่วย (Patient History)",
+                en: "1. Patient History",
+                ar: "1. تاريخ المريض",
+                zh: "1. 患者病史",
+                ja: "1. 患者の病歴"
+            },
+            language: {
+                th: "ภาษาของเอกสาร (Document Language)",
+                en: "Document Language",
+                ar: "لغة الوثيقة",
+                zh: "文件语言",
+                ja: "ドキュメント言語"
+            },
+            name: {
+                th: "ชื่อ-นามสกุล / HN",
+                en: "Name / HN",
+                ar: "الاسم / رقم ملف المريض",
+                zh: "姓名 / 病历号",
+                ja: "氏名 / HN"
+            },
+            age: {
+                th: "อายุ / เพศ / BMI",
+                en: "Age / Sex / BMI",
+                ar: "العمر / الجنس / مؤشر كتلة الجسم",
+                zh: "年龄 / 性别 / BMI",
+                ja: "年齢 / 性別 / BMI"
+            },
+            underlying: {
+                th: "โรคประจำตัว (Underlying)",
+                en: "Underlying Diseases",
+                ar: "الأمراض الكامنة",
+                zh: "基础疾病",
+                ja: "基礎疾患"
+            },
+            past_history: {
+                th: "ประวัติการเจ็บป่วย/ผ่าตัดที่สำคัญ",
+                en: "Past/Surgical History",
+                ar: "تاريخ المرض/الجراحة السابق",
+                zh: "既往/手术史",
+                ja: "既往歴/手術歴"
+            },
+            allergy: {
+                th: "ประวัติการแพ้ยา/อาหาร",
+                en: "Drug/Food Allergy",
+                ar: "تاريخ حساسية الدواء/الطعام",
+                zh: "药物/食物过敏史",
+                ja: "薬物/食物アレルギー"
+            },
+            generate_btn: {
+                th: "สร้างสรุปและคำแนะนำโดย AI",
+                en: "Generate Summary and Recommendations by AI",
+                ar: "إنشاء ملخص وتوصيات بالذكاء الاصطناعي",
+                zh: "生成AI总结和建议",
+                ja: "AIによるサマリーと推奨事項を生成"
+            },
+            output_header: {
+                th: "ผลลัพธ์เอกสารที่สร้างโดยระบบ",
+                en: "System Generated Documents",
+                ar: "الوثائق التي تم إنشاؤها بواسطة النظام",
+                zh: "系统生成的文件",
+                ja: "システム生成ドキュメント"
+            },
+            print_btn: {
+                th: "พิมพ์เอกสารทั้งหมด",
+                en: "Print All Documents",
+                ar: "طباعة جميع الوثائق",
+                zh: "打印所有文件",
+                ja: "すべてのドキュメントを印刷"
+            },
+            summary_doc_title: {
+                th: "สรุปประวัติการรักษา 3 ครั้งล่าสุด (Raw Data)",
+                en: "Latest 3 Visit History (Raw Data)",
+                ar: "تاريخ آخر 3 زيارات (بيانات خام)",
+                zh: "最近3次就诊历史（原始数据）",
+                ja: "最新の3回の受診履歴（生データ）"
+            },
+            pfe_doc_title: {
+                th: "เอกสารให้ความรู้แก่ผู้ป่วย (Patient Education - PFE)",
+                en: "Patient Education Document (PFE)",
+                ar: "وثيقة توعية المريض (PFE)",
+                zh: "患者教育文件（PFE）",
+                ja: "患者教育資料（PFE）"
+            },
+            // Raw Table Titles
+            raw_table_title: {
+                th: "รายการ",
+                en: "Item",
+                ar: "البند",
+                zh: "项目",
+                ja: "項目"
+            },
+            raw_table_visit3: {
+                th: "ครั้งที่ 3 (ล่าสุด:",
+                en: "Visit 3 (Latest:",
+                ar: "الزيارة الثالثة (الأخيرة:",
+                zh: "第3次就诊（最近：",
+                ja: "3回目の受診（最新："
+            },
+            raw_table_visit2: {
+                th: "ครั้งที่ 2 (",
+                en: "Visit 2 (",
+                ar: "الزيارة الثانية (",
+                zh: "第2次就诊（",
+                ja: "2回目の受診（"
+            },
+            raw_table_visit1: {
+                th: "ครั้งที่ 1 (",
+                en: "Visit 1 (",
+                ar: "الزيارة الأولى (",
+                zh: "第1次就诊（",
+                ja: "1回目の受診（"
+            },
+            raw_cc: {
+                th: "CC/อาการสำคัญ",
+                en: "CC/Chief Complaint",
+                ar: "الشكوى الرئيسية",
+                zh: "主诉",
+                ja: "主訴"
+            },
+            raw_pe: {
+                th: "PE/VS",
+                en: "PE/VS",
+                ar: "الفحص البدني/العلامات الحيوية",
+                zh: "体检/生命体征",
+                ja: "身体診察/バイタルサイン"
+            },
+            raw_diag: {
+                th: "Diagnosis",
+                en: "Diagnosis",
+                ar: "التشخيص",
+                zh: "诊断",
+                ja: "診断"
+            },
+            raw_med: {
+                th: "Medication",
+                en: "Medication",
+                ar: "الأدوية",
+                zh: "用药",
+                ja: "投薬"
+            },
+            raw_lab: {
+                th: "Lab/Xray",
+                en: "Lab/Xray",
+                ar: "المختبر/الأشعة",
+                zh: "化验/X光",
+                ja: "検査/レントゲン"
+            },
+            raw_outcome: {
+                th: "ผลการรักษา (Outcome)",
+                en: "Treatment Outcome",
+                ar: "نتيجة العلاج",
+                zh: "治疗结果",
+                ja: "治療結果"
+            },
+            raw_plan: {
+                th: "Plan/Others",
+                en: "Plan/Others",
+                ar: "الخطة/أخرى",
+                zh: "计划/其他",
+                ja: "計画/その他"
+            },
+            // Medication Table Titles
+            med_table_title: {
+                th: "การใช้ยา (Medication Schedule)",
+                en: "Medication Schedule",
+                ar: "جدول الأدوية",
+                zh: "用药时间表",
+                ja: "服薬スケジュール"
+            },
+            med_meal: {
+                th: "มื้อ",
+                en: "Time",
+                ar: "الوقت",
+                zh: "时间",
+                ja: "時間"
+            },
+            med_before: {
+                th: "ก่อนอาหาร",
+                en: "Before Meal",
+                ar: "قبل الوجبة",
+                zh: "饭前",
+                ja: "食前"
+            },
+            med_after: {
+                th: "หลังอาหาร",
+                en: "After Meal",
+                ar: "بعد الوجبة",
+                zh: "饭后",
+                ja: "食後"
+            },
+            med_prn: {
+                th: "ยาใช้ตามอาการ (PRN)",
+                en: "As Needed Medication (PRN)",
+                ar: "الأدوية عند الحاجة (PRN)",
+                zh: "按需用药（PRN）",
+                ja: "頓服薬（PRN）"
+            },
+            med_none: {
+                th: "ไม่มี",
+                en: "N/A",
+                ar: "لا يوجد",
+                zh: "无",
+                ja: "なし"
+            },
+            // Self-Care Table Titles
+            self_care_title: {
+                th: "ตารางการดูแลตนเองและติดตามอาการ (Self-Care & Monitoring Plan)",
+                en: "Self-Care & Monitoring Plan Table",
+                ar: "جدول الرعاية الذاتية والمراقبة",
+                zh: "自我护理与监测计划表",
+                ja: "セルフケアとモニタリング計画表"
+            },
+            self_care_item: {
+                th: "รายการ",
+                en: "Item",
+                ar: "البند",
+                zh: "项目",
+                ja: "項目"
+            },
+            self_care_freq: {
+                th: "ความถี่ / เวลา",
+                en: "Frequency / Time",
+                ar: "التكرار / الوقت",
+                zh: "频率 / 时间",
+                ja: "頻度 / 時間"
+            },
+            self_care_action: {
+                th: "การดำเนินการ",
+                en: "Action",
+                ar: "الإجراء",
+                zh: "行动",
+                ja: "行動"
+            },
+            // Plan/Goal Titles
+            plan_goal_header: {
+                th: "แผนการรักษาและเป้าหมาย",
+                en: "Treatment Plan and Goals",
+                ar: "خطة العلاج والأهداف",
+                zh: "治疗计划和目标",
+                ja: "治療計画と目標"
+            },
+            plan_goal_label: {
+                th: "เป้าหมายการรักษา:",
+                en: "Treatment Goal:",
+                ar: "هدف العلاج:",
+                zh: "治疗目标:",
+                ja: "治療目標:"
+            },
+            plan_progress_label: {
+                th: "ความคืบหน้าของแผนการรักษา (อิงจากคะแนนประเมิน):",
+                en: "Treatment Progress (Based on Scores):",
+                ar: "تقدم العلاج (بناءً على النتائج):",
+                zh: "治疗进展（基于分数）：",
+                ja: "治療の進捗状況（スコアに基づく）："
+            },
+            plan_progress_achieved: {
+                th: "บรรลุเป้าหมายไปแล้ว",
+                en: "Goal achieved",
+                ar: "تم تحقيق الهدف",
+                zh: "已达成的目标",
+                ja: "達成された目標"
+            },
+            plan_phase_default: {
+                th: "ไม่ระบุ",
+                en: "Phase not specified",
+                ar: "المرحلة غير محددة",
+                zh: "阶段未指定",
+                ja: "フェーズ未指定"
+            },
+            plan_desc_default: {
+                th: "รายละเอียดแผนการรักษาเพิ่มเติม",
+                en: "Additional treatment plan details",
+                ar: "تفاصيل خطة العلاج الإضافية",
+                zh: "附加治疗计划详情",
+                ja: "追加の治療計画の詳細"
+            },
+            ai_doc_desc: {
+                th: "สิ่งที่ญาติควรสังเกตและให้การสนับสนุน",
+                en: "What Relatives Should Observe and Support",
+                ar: "ما يجب على الأقارب ملاحظته ودعمه",
+                zh: "亲属应观察和支持的事项",
+                ja: "親族が観察し、サポートすべきこと"
+            },
+            red_flags_desc: {
+                th: "เมื่อไหร่ที่ควรมาพบแพทย์ทันที (Red Flags)",
+                en: "When to See a Doctor Immediately (Red Flags)",
+                ar: "متى يجب مراجعة الطبيب فوراً (علامات الخطر)",
+                zh: "应立即就医的情况（红色警报）",
+                ja: "直ちに医師の診察を受けるべき時（レッドフラグ）"
+            }
+        };
+
+        // Check for stable key (e.g., meal_morning) or fallback to simple key (e.g., app_title)
+        if (texts[key] && texts[key][lang]) {
+            return texts[key][lang];
+        }
+        
+        // Fallback for old keys structure (if needed) - mainly for the main headers
+        const flatTexts = {};
+        Object.keys(texts).forEach(k => {
+            if (typeof texts[k] === 'object' && texts[k][lang]) {
+                flatTexts[k] = texts[k][lang];
+            }
+        });
+
+        return flatTexts[key] || texts[key]?.th || texts['app_title'].th; // Default to Thai if key/language not found
+    }
+
+    // --- Utility Functions ---
+
+    /**
+     * Synchronizes the Visit History Dates with the Score Dates
+     */
+    function syncDates() {
+        // Visit 1 (Oldest) aligns with Preop 1
+        document.getElementById('visitDate_1_input').value = document.getElementById('score_date_preop1').value;
+        // Visit 2 aligns with Preop 2
+        document.getElementById('visitDate_2_input').value = document.getElementById('score_date_preop2').value;
+        // Visit 3 (Current) aligns with Postop 1
+        document.getElementById('visitDate_3_input').value = document.getElementById('score_date_postop1').value;
+    }
+
+    /**
+     * Updates static UI text based on the selected language
+     * !!! IMPORTANT: Button texts are explicitly set to Thai ('th') to maintain staff usability. !!!
+     */
+    function updateUIText(lang) {
+        document.getElementById('app-title').textContent = getLocalizedText('app_title', lang);
+        document.getElementById('input-header').textContent = getLocalizedText('input_header', lang);
+        document.getElementById('label-name').textContent = getLocalizedText('name', lang);
+        document.getElementById('label-age').textContent = getLocalizedText('age', lang);
+        document.getElementById('label-language').textContent = getLocalizedText('language', lang);
+        document.getElementById('label-underlying').textContent = getLocalizedText('underlying', lang);
+        document.getElementById('label-pastHistory').textContent = getLocalizedText('past_history', lang);
+        document.getElementById('label-allergy').textContent = getLocalizedText('allergy', lang);
+        
+        // FIX: Buttons are always in Thai for staff usability (confirmed in V17)
+        generateBtn.childNodes[3].nodeValue = getLocalizedText('generate_btn', 'th'); 
+        printBtn.textContent = getLocalizedText('print_btn', 'th');
+        // END FIX
+
+        document.getElementById('output-header').textContent = getLocalizedText('output_header', lang);
+        document.getElementById('summary-doc-title').textContent = getLocalizedText('summary_doc_title', lang);
+        document.getElementById('pfe-doc-title').textContent = getLocalizedText('pfe_doc_title', lang);
+    }
+
+    /**
+     * Exponential Backoff for Retries
+     */
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.ok) {
+                    return response;
+                } else if (response.status === 429 && i < maxRetries - 1) {
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    console.warn(`Rate limit hit. Retrying in ${delay.toFixed(0)}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    const errorBody = await response.text();
+                    console.error("API Response Body on Error:", errorBody);
+                    throw new Error(`API returned status ${response.status}: ${response.statusText}. Body: ${errorBody.substring(0, 150)}...`);
+                }
+            } catch (error) {
+                if (i === maxRetries - 1 || error.message.includes('400')) throw error;
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                console.error(`Fetch error. Retrying in ${delay.toFixed(0)}ms...`, error.message);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+
+    /**
+     * Parses form data into a structured object for display and AI.
+     */
+    function serializeFormData(form) {
+        const formData = new FormData(form);
+        const data = {};
+        const lang = formData.get('documentLanguage');
+
+        // 1. Patient Demographic & History
+        data.demographic = {
+            name: formData.get('name'),
+            age: formData.get('age'),
+            underlying: formData.get('underlying'),
+            pastHistory: formData.get('pastHistory'),
+            allergy: formData.get('allergy'),
+            language: lang, // NEW: Document Language
+        };
+
+        // 2. Visit History (3 times) - Sorted by newest (3) to oldest (1)
+        data.visits = [];
+        for (let i = 3; i >= 1; i--) { 
+            data.visits.push({
+                index: i,
+                date: formData.get(`visitDate_${i}`),
+                ccPi: formData.get(`ccPi_${i}`),
+                pe: formData.get(`pe_${i}`),
+                diag: formData.get(`diag_${i}`),
+                med: formData.get(`med_${i}`),
+                labXray: formData.get(`labXray_${i}`),
+                treatmentOutcome: formData.get(`treatmentOutcome_${i}`),
+                others: formData.get(`others_${i}`),
+                isCurrent: i === 3
+            });
+        }
+        
+        // 3. Orthopedic Scores (5 times + Dates)
+        const scorePrefixes = ['preop1', 'preop2', 'postop1', 'postop2', 'postop3'];
+        
+        data.scores = {
+            womac: {},
+            vas: {},
+            odi: {}, 
+            others: {},
+            dates: {}
+        };
+        
+        scorePrefixes.forEach(prefix => {
+            data.scores.womac[prefix] = formData.get(`score_womac_${prefix}`);
+            data.scores.vas[prefix] = formData.get(`score_vas_${prefix}`);
+            data.scores.odi[prefix] = formData.get(`score_odi_${prefix}`);
+            data.scores.others[prefix] = formData.get(`score_others_${prefix}`);
+            data.scores.dates[prefix] = formData.get(`score_date_${prefix}`);
+        });
+
+        return data;
+    }
+
+    /**
+     * Generates the prompt string for PFE ONLY, with language instruction.
+     */
+    function createPFEPrompt(patientData) {
+        const lang = patientData.demographic.language;
+        let langInstruction = '';
+        if (lang === 'en') langInstruction = "Please generate the entire response in **English**.";
+        else if (lang === 'ar') langInstruction = "الرجاء إنشاء الاستجابة بالكامل باللغة **العربية** (Arabic).";
+        else if (lang === 'zh') langInstruction = "请以**中文**（Chinese）生成完整的回复。";
+        else if (lang === 'ja') langInstruction = "応答全体を**日本語**（Japanese）で生成してください。";
+        else langInstruction = "โปรดสร้างเอกสารทั้งหมดเป็นภาษา **ไทย**";
+
+
+        let prompt = `คุณคือผู้ช่วยแพทย์ที่เชี่ยวชาญด้านการให้คำแนะนำผู้ป่วย โปรดสร้างเอกสารให้ความรู้แก่ผู้ป่วย (PFE) และส่วนสรุปผลการรักษาในรูปแบบ JSON ที่ถูกต้องตาม Schema ที่กำหนดเท่านั้น โดยปฏิบัติตามกฎด้านล่าง:\n${langInstruction}\n\n`;
+        
+        // System Instruction for structured output
+        prompt += "กฎการสร้าง JSON:\n1. ใช้โครงสร้างหลัก: {\"pfe_text\": \"...\", \"treatment_plan\": {...}, \"relative_observation\": \"...\", \"red_flags\": \"...\"}\n2. pfe_text: สร้างเอกสารให้ความรู้ (PFE) ใช้ Markdown สำหรับหัวข้อ (##) และรายการ (*)\n3. treatment_plan: สร้างแผนการรักษา (goal, progress เป็น Integer 0-100, phases เป็น Array)\n4. relative_observation: **สิ่งที่ญาติควรสังเกตและให้การสนับสนุน** ใช้รายการ (* หรือ -)\n5. red_flags: **อาการหรือสถานการณ์ที่ควรมาพบแพทย์ทันที** ใช้รายการ (* หรือ -)\n\n";
+
+        // Patient Data
+        prompt += "### ข้อมูลผู้ป่วย (Patient Data) ###\n";
+        prompt += `ชื่อ-นามสกุล: ${patientData.demographic.name}\n`;
+        prompt += `โรคประจำตัว: ${patientData.demographic.underlying}\n`;
+
+        // Orthopedic Scores - For AI Analysis
+        prompt += `--- คะแนนการประเมินทางออร์โธปิดิกส์ (เพื่อใช้ในการวิเคราะห์ผลการรักษา) ---\n`;
+        const scorePrefixes = ['preop1', 'preop2', 'postop1', 'postop2', 'postop3'];
+        
+        const womacScores = scorePrefixes.map(prefix => 
+            `WOMAC Score ${patientData.scores.dates[prefix]}: ${patientData.scores.womac[prefix]}`
+        ).join(', ');
+        
+        const odiScores = scorePrefixes.map(prefix => 
+            `ODI Score ${patientData.scores.dates[prefix]}: ${patientData.scores.odi[prefix]}`
+        ).join(', ');
+
+        prompt += `- คะแนน WOMAC (ยิ่งต่ำยิ่งดี, เต็ม 96): ${womacScores}\n`;
+        prompt += `- คะแนน ODI (ยิ่งต่ำยิ่งดี, เต็ม 100): ${odiScores}\n`;
+        prompt += `- VAS Pain Score ล่าสุด (${patientData.scores.dates.postop1}): ${patientData.scores.vas.postop1}\n`;
+        
+        // Current Visit Data
+        const currentVisit = patientData.visits.find(v => v.isCurrent);
+        prompt += `--- การรักษาครั้งล่าสุด (วันที่ ${currentVisit.date}) ---\n`;
+        prompt += `- อาการ/PI: ${currentVisit.ccPi}\n`;
+        prompt += `- วินิจฉัย: ${currentVisit.diag}\n`;
+        prompt += `- ผลการรักษาจากแพทย์ครั้งล่าสุด: ${currentVisit.treatmentOutcome}\n`; 
+        prompt += `- แผน/อื่นๆ (Plan): ${currentVisit.others}\n`;
+        prompt += `- ยาที่ได้รับ: ${currentVisit.med}\n`; // Include medication for AI context
+
+        prompt += "\n\n**โปรดสร้าง JSON ตามโครงสร้างและกฎที่กำหนดเท่านั้น โดยเนื้อหา PFE ต้องเน้นการดูแลตนเองที่สอดคล้องกับแผนการรักษาล่าสุด และการควบคุมโรคประจำตัว**";
+
+        return prompt;
+    }
+
+    /**
+     * Renders a block of content into editable HTML, handling lists and paragraphs.
+     */
+    function renderEditableContent(content) {
+        if (!content || !content.trim()) {
+            return `<p class="italic text-gray-500">N/A</p>`;
+        }
+        
+        let htmlContent = '';
+        let isInsideList = false;
+        
+        const contentLines = content.split('\n').map(line => line.trim()).filter(line => line);
+
+        contentLines.forEach(line => {
+            const isListItem = line.match(/^([*-•]|\d+\.)\s+/);
+            
+            if (isListItem) {
+                if (!isInsideList) {
+                    htmlContent += '<ul class="list-disc ml-4 space-y-1">';
+                    isInsideList = true;
+                }
+                const cleanItem = line.substring(isListItem[0].length).trim();
+                // Ensure list item content is editable
+                htmlContent += `<li><div contenteditable="true" class="inline-block">${cleanItem}</div></li>`;
+            } else {
+                if (isInsideList) {
+                    htmlContent += '</ul>';
+                    isInsideList = false;
+                }
+                // Ensure paragraph content is editable
+                htmlContent += `<p class="mb-1" contenteditable="true">${line}</p>`;
+            }
+        });
+
+        if (isInsideList) {
+            htmlContent += '</ul>';
+        }
+
+        return htmlContent;
+    }
+    
+    /**
+     * Generates a simple section card for new fields (Observation/Red Flags).
+     */
+    function renderNewSection(title, content, bgColor, borderColor, titleColor) {
+        if (!content || !content.trim()) return '';
+
+        let htmlContent = renderEditableContent(content);
+
+        return `
+            <div class="pfe-section-card mt-4" style="background-color: ${bgColor}; border: 1px solid ${borderColor};">
+                <h3 class="text-xl font-bold mb-2" style="color: ${titleColor};" contenteditable="true">${title}</h3>
+                ${htmlContent}
+            </div>
+        `;
+    }
+
+    /**
+     * Generates the fixed Self-Care table (Manual/Pre-defined).
+     */
+    function generateSelfCareTable(lang) {
+        const T = getLocalizedText;
+        return `
+            <h3 class="text-xl font-bold text-teal-700 mb-2 mt-8 border-b pb-1">${T('self_care_title', lang)}</h3>
+            <table class="general-table">
+                <thead>
+                    <tr>
+                        <th class="w-1/3">${T('self_care_item', lang)}</th>
+                        <th class="w-1/3">${T('self_care_freq', lang)}</th>
+                        <th class="w-1/3">${T('self_care_action', lang)}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td contenteditable="true">${lang === 'th' ? 'ออกกำลังกายข้อเข่า' : (lang === 'en' ? 'Knee exercises' : (lang === 'ar' ? 'تمارين الركبة' : (lang === 'zh' ? '膝部锻炼' : (lang === 'ja' ? '膝の運動' : 'Knee exercises'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? '2-3 ครั้ง/วัน' : (lang === 'en' ? '2-3 times/day' : (lang === 'ar' ? '2-3 مرات/يوم' : (lang === 'zh' ? '每天2-3次' : (lang === 'ja' ? '1日2〜3回' : '2-3 times/day'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'ท่าเหยียดเข่า, ท่าปั่นจักรยานอากาศ (ทำตามคำแนะนำ PT)' : (lang === 'en' ? 'Knee straightening, air cycling (follow PT instructions)' : (lang === 'ar' ? 'تقويم الركبة، ركوب الدراجات الهوائية (اتباع تعليمات PT)' : (lang === 'zh' ? '膝盖伸直，空中骑车（遵循PT指导）' : (lang === 'ja' ? '膝の運動（PTの指示に従う）' : 'Knee exercises (follow PT instructions)'))))}</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">${lang === 'th' ? 'การจัดการน้ำหนักตัว' : (lang === 'en' ? 'Weight Management' : (lang === 'ar' ? 'إدارة الوزن' : (lang === 'zh' ? '体重管理' : (lang === 'ja' ? '体重管理' : 'Weight Management'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'ควบคุมอาหารทุกวัน' : (lang === 'en' ? 'Daily diet control' : (lang === 'ar' ? 'التحكم في النظام الغذائي اليومي' : (lang === 'zh' ? '每日饮食控制' : (lang === 'ja' ? '毎日の食事管理' : 'Daily diet control'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'ตั้งเป้าลด 5 กิโลกรัมภายใน 6 เดือน' : (lang === 'en' ? 'Target 5kg weight loss in 6 months' : (lang === 'ar' ? 'هدف خسارة 5 كجم في غضون 6 أشهر' : (lang === 'zh' ? '目标在6个月内减掉5公斤' : (lang === 'ja' ? '6ヶ月で5kg減量を目指す' : 'Target 5kg weight loss in 6 months'))))}</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">${lang === 'th' ? 'การรับประทานยาแก้ปวด' : (lang === 'en' ? 'Taking Pain Medication' : (lang === 'ar' ? 'تناول أدوية الألم' : (lang === 'zh' ? '服用止痛药' : (lang === 'ja' ? '鎮痛薬の服用' : 'Taking Pain Medication'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'เมื่อมีอาการปวดเท่านั้น' : (lang === 'en' ? 'Only when pain occurs' : (lang === 'ar' ? 'فقط عند الشعور بالألم' : (lang === 'zh' ? '仅在疼痛发生时' : (lang === 'ja' ? '痛いときだけ' : 'Only when pain occurs'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'ห้ามกินเกินขนาดที่แพทย์สั่ง' : (lang === 'en' ? 'Do not exceed prescribed dosage' : (lang === 'ar' ? 'عدم تجاوز الجرعة الموصوفة' : (lang === 'zh' ? '不得超过医嘱剂量' : (lang === 'ja' ? '処方された用量を超えないこと' : 'Do not exceed prescribed dosage'))))}</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">${lang === 'th' ? 'การประเมินอาการ' : (lang === 'en' ? 'Symptom Assessment' : (lang === 'ar' ? 'تقييم الأعراض' : (lang === 'zh' ? '症状评估' : (lang === 'ja' ? '症状評価' : 'Symptom Assessment'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'ทุกวัน' : (lang === 'en' ? 'Daily' : (lang === 'ar' ? 'يوميًا' : (lang === 'zh' ? '每天' : (lang === 'ja' ? '毎日' : 'Daily'))))}</td>
+                        <td contenteditable="true">${lang === 'th' ? 'บันทึกระดับความปวด (VAS Score) และอาการบวม' : (lang === 'en' ? 'Record pain level (VAS Score) and swelling' : (lang === 'ar' ? 'تسجيل مستوى الألم (VAS Score) والتورم' : (lang === 'zh' ? '记录疼痛程度（VAS评分）和肿胀' : (lang === 'ja' ? '痛みのレベル（VASスコア）と腫れを記録' : 'Record pain level (VAS Score) and swelling'))))}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+    }
+
+    /**
+     * Generates the Medication Table. (FIXED: Localized meal times)
+     */
+    function generateMedicationTable(patientData) {
+        const lang = patientData.demographic.language;
+        const T = getLocalizedText;
+
+        const currentVisit = patientData.visits.find(v => v.isCurrent);
+        const medText = currentVisit.med || '';
+
+        // Stable keys linked to localization and icon
+        const MEAL_KEYS = ['morning', 'noon', 'evening', 'bedtime'];
+        const MEAL_TIMES_MAP = {
+            'เช้า': 'morning',
+            'กลางวัน': 'noon',
+            'เย็น': 'evening',
+            'ก่อนนอน': 'bedtime'
+        };
+
+        const meals = {};
+        MEAL_KEYS.forEach(key => {
+            meals[key] = { 
+                before: T('med_none', lang), 
+                after: T('med_none', lang), 
+                icon: key === 'morning' ? '☀️' : key === 'noon' ? '😊' : key === 'evening' ? '🌙' : '😴',
+                label: T(`meal_${key}`, lang) // Localized label
+            };
+        });
+        
+        let prnMed = T('med_none', lang);
+
+        const lines = medText.split('\n').map(line => line.trim()).filter(line => line);
+
+        lines.forEach(line => {
+            const parts = line.split(':');
+            if (parts.length < 2) {
+                if (line.toUpperCase().includes('PRN')) {
+                     prnMed = line.replace(/ยา\s*PRN\s*:\s*|PRN\s*:/i, '').trim() || (lang === 'en' ? 'Specify PRN drug' : T('med_none', lang));
+                }
+                return;
+            }
+
+            const mealTimeInput = parts[0].trim(); // e.g., 'เช้า'
+            const meds = parts[1].trim();
+            
+            const mealKey = MEAL_TIMES_MAP[mealTimeInput]; // e.g., 'morning'
+            
+            if (mealKey && meals[mealKey]) {
+                const beforeMatch = meds.match(/(.+)\s*\((ก่อนอาหาร|before meal)\)/i);
+                
+                if (beforeMatch) {
+                    meals[mealKey].before = beforeMatch[1].trim();
+                    const otherMeds = meds.replace(beforeMatch[0], '').replace(',', '').trim();
+                    if(otherMeds) {
+                         meals[mealKey].after = otherMeds;
+                    }
+                } else {
+                    meals[mealKey].after = meds;
+                }
+            }
+        });
+        
+        let tableHtml = `
+            <div class="mt-8">
+                <h3 class="text-xl font-bold text-blue-700 mb-2 mt-8 border-b pb-1">${T('med_table_title', lang)}</h3>
+                <table class="general-table medication-table">
+                    <thead>
+                        <tr>
+                            <th class="w-1/6">${T('med_meal', lang)}</th>
+                            <th class="w-5/12">${T('med_before', lang)}</th>
+                            <th class="w-5/12">${T('med_after', lang)}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        for (const [key, data] of Object.entries(meals)) {
+            tableHtml += `
+                <tr>
+                    <td contenteditable="true" class="font-bold whitespace-nowrap">${data.icon} ${data.label}</td>
+                    <td contenteditable="true" class="${data.before === T('med_none', lang) ? 'text-gray-500 italic' : ''}">${data.before.replace(/,\s*$/, '')}</td>
+                    <td contenteditable="true" class="${data.after === T('med_none', lang) ? 'text-gray-500 italic' : ''}">${data.after.replace(/,\s*$/, '')}</td>
+                </tr>
+            `;
+        }
+        
+        tableHtml += `
+                    </tbody>
+                </table>
+                <div class="mt-4 border-t pt-2">
+                    <h4 class="font-bold text-base text-gray-700">${T('med_prn', lang)}</h4>
+                    <p contenteditable="true" class="ml-2 text-red-700 font-medium">* ${prnMed}</p>
+                </div>
+            </div>
+        `;
+        return tableHtml;
+    }
+
+    /**
+     * Converts markdown text to a structured HTML format using section cards (PFE).
+     */
+    function markdownToHtml(mdText) {
+        if (!mdText) return '<p>No AI recommendations found.</p>';
+        
+        let finalHtml = '';
+        let currentSectionTitle = '';
+        let currentSectionContent = '';
+        const lines = mdText.split('\n');
+
+        const renderSection = (title, content) => {
+            if (!title || !content.trim()) return '';
+
+            let htmlContent = renderEditableContent(content); 
+
+            return `
+                <div class="pfe-section-card">
+                    <h3 class="text-lg font-semibold text-teal-800 mb-2" contenteditable="true">${title}</h3>
+                    ${htmlContent}
+                </div>
+            `;
+        };
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith('##')) {
+                if (currentSectionTitle) {
+                    finalHtml += renderSection(currentSectionTitle, currentSectionContent);
+                }
+                currentSectionTitle = line.replace('##', '').trim();
+                currentSectionContent = '';
+            } else {
+                currentSectionContent += line + '\n';
+            }
+        });
+        
+        if (currentSectionTitle) {
+            finalHtml += renderSection(currentSectionTitle, currentSectionContent);
+        }
+        
+        return finalHtml || '<p>No AI recommendations found.</p>';
+    }
+    
+    /**
+     * Generates the structured Plan/Goal section, localized.
+     */
+    function generateTreatmentPlanHtml(planData, lang) {
+        const T = getLocalizedText;
+        if (!planData || !planData.goal || !planData.phases || planData.phases.length === 0) {
+            return `<p class="text-red-500 font-medium mt-4">${lang === 'en' ? 'Could not generate Treatment Plan and Goals (data incomplete).' : 'ไม่สามารถสร้างส่วน **แผนการรักษาและเป้าหมาย** ได้ (ข้อมูลไม่ครบถ้วน)'}</p>`;
+        }
+        
+        const progress = Math.min(100, Math.max(0, parseInt(planData.progress) || 0));
+        
+        let phasesHtml = planData.phases.map((phase, index) => `
+            <div class="plan-phase-card text-xs">
+                <div class="plan-phase-title" contenteditable="true">${phase.time || `${T('plan_phase_default', lang)} ${index + 1}`}</div>
+                <div contenteditable="true" class="text-gray-700">${phase.description || T('plan_desc_default', lang)}</div>
+            </div>
+        `).join('');
+        
+        const totalPhases = 4;
+        const currentPhases = planData.phases.length;
+        
+        for (let i = currentPhases; i < totalPhases; i++) {
+            phasesHtml += `
+            <div class="plan-phase-card text-xs bg-gray-50 border-gray-300">
+                <div class="plan-phase-title text-gray-500" contenteditable="true">Phase ${i + 1} (${T('plan_phase_default', lang)})</div>
+                <div contenteditable="true" class="text-gray-400">${T('plan_desc_default', lang)}</div>
+            </div>`;
+        }
+
+
+        return `
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-red-600 mb-4 border-b pb-2">${T('plan_goal_header', lang)}</h3>
+                <div class="plan-header-card">
+                    <div class="plan-goal mb-2">${T('plan_goal_label', lang)} <span contenteditable="true" class="font-normal text-gray-800">${planData.goal}</span></div>
+                    <div class="text-sm text-gray-600">${T('plan_progress_label', lang)}</div>
+                    
+                    <div class="plan-progress">
+                        <div class="plan-progress-bar" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="text-right text-xs font-semibold text-red-700 mb-4">${T('plan_progress_achieved', lang)} ${progress}%</div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        ${phasesHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Generates the Visit Summary table from raw input data, localized.
+     */
+    function generateRawVisitSummaryTable(patientData) {
+        const lang = patientData.demographic.language;
+        const T = getLocalizedText;
+
+        let tableHtml = `
+            <table class="summary-table">
+                <thead>
+                    <tr id="visit-history-table">
+                        <th>${T('raw_table_title', lang)}</th>
+                        <th class="bg-blue-600 text-white">${T('raw_table_visit3', lang)} ${patientData.visits[0].date})</th>
+                        <th>${T('raw_table_visit2', lang)} ${patientData.visits[1].date})</th>
+                        <th>${T('raw_table_visit1', lang)} ${patientData.visits[2].date})</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        const fields = [
+            { key: 'ccPi', labelKey: 'raw_cc' },
+            { key: 'pe', labelKey: 'raw_pe' },
+            { key: 'diag', labelKey: 'raw_diag' },
+            { key: 'med', labelKey: 'raw_med' },
+            { key: 'labXray', labelKey: 'raw_lab' },
+            { key: 'treatmentOutcome', labelKey: 'raw_outcome' }, 
+            { key: 'others', labelKey: 'raw_plan' },
+        ];
+
+        fields.forEach(field => {
+            tableHtml += `
+                <tr>
+                    <th class="bg-gray-100">${T(field.labelKey, lang)}</th>
+                    <td contenteditable="true" class="text-blue-900 font-medium">${patientData.visits[0][field.key] || '-'}</td>
+                    <td contenteditable="true">${patientData.visits[1][field.key] || '-'}</td>
+                    <td contenteditable="true">${patientData.visits[2][field.key] || '-'}</td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `</tbody></table>`;
+        return tableHtml;
+    }
+
+
+    /**
+     * Main function to handle form submission and document generation.
+     */
+    async function generateDocuments(event) {
+        event.preventDefault();
+        
+        // *** Start of Loading State (As requested) ***
+        generateBtn.disabled = true;
+        loadingSpinner.classList.remove('hidden');
+        outputSection.classList.add('hidden');
+        // *** End of Loading State ***
+        
+        const patientData = serializeFormData(event.target);
+        const lang = patientData.demographic.language;
+        const T = getLocalizedText;
+
+        // Feedback on Output Section
+        const loadingText = lang === 'en' 
+            ? 'Generating document... Please wait for a few seconds.' 
+            : 'กำลังสร้างเอกสารโดย AI... กรุณารอสักครู่';
+            
+        summaryContent.innerHTML = `<p class="text-center text-blue-500">${loadingText}</p>`;
+        pfeContent.innerHTML = `<p class="text-center text-blue-500">${loadingText}</p>`;
+
+
+        // 1. Generate Raw Visit Summary (Directly from Input Data)
+        // Note: We deliberately put the raw table content back after setting the loading message
+        // This makes the UI feel faster while waiting for the AI call.
+        // If the AI call fails, the Raw table will still be available.
+        summaryContent.innerHTML = generateRawVisitSummaryTable(patientData);
+        
+        // 2. Prepare for AI PFE Generation
+        const prompt = createPFEPrompt(patientData);
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: {
+                parts: [{ text: `You are a professional medical assistant. Provide the response ONLY in JSON format, strictly following the specified schema. The output must be in ${lang === 'en' ? 'English' : (lang === 'ar' ? 'Arabic' : (lang === 'zh' ? 'Chinese' : (lang === 'ja' ? 'Japanese' : 'Thai')))}.` }]
+            },
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        "pfe_text": { "type": "STRING" },
+                        "treatment_plan": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "goal": { "type": "STRING" },
+                                "progress": { "type": "INTEGER" },
+                                "phases": { 
+                                    "type": "ARRAY", 
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "time": { "type": "STRING" },
+                                            "description": { "type": "STRING" }
+                                        },
+                                        "required": ["time", "description"]
+                                    },
+                                }
+                            },
+                            "required": ["goal", "progress", "phases"]
+                        },
+                        "relative_observation": { "type": "STRING" }, 
+                        "red_flags": { "type": "STRING" } 
+                    },
+                    "required": ["pfe_text", "treatment_plan", "relative_observation", "red_flags"]
+                }
+            }
+        };
+
+
+        try {
+            // Display loading text *before* the API call starts
+            pfeContent.innerHTML = `<p class="text-center text-blue-500">${loadingText}</p>`; 
+
+            const response = await fetchWithRetry(GEMINI_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            // --- Log the raw result for deep debugging (as discussed) ---
+            console.log("Raw Gemini API Result (for debugging):", result);
+
+            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!jsonText) {
+                if (result.error) {
+                    throw new Error(`API Error: ${result.error.message || 'Unknown error'}`);
+                }
+                throw new Error("API did not return structured text content (candidates is empty or safe filtered).");
+            }
+            
+            let rawJsonString = jsonText.trim();
+            // Clean up backticks and 'json' tag sometimes added by the model
+            const cleanedJsonString = rawJsonString.replace(/^```json\s*|```\s*$/g, '').trim();
+            const firstBrace = cleanedJsonString.indexOf('{');
+            const lastBrace = cleanedJsonString.lastIndexOf('}');
+            
+            if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+                console.error("Failed to find valid JSON braces after cleaning:", cleanedJsonString);
+                // Log the final cleaned string that failed to parse
+                throw new Error("AI output structure is invalid (Missing { or }). Raw text snippet: " + cleanedJsonString.substring(0, 200) + '...');
+            }
+            
+            const finalJsonString = cleanedJsonString.substring(firstBrace, lastBrace + 1);
+            const aiResponse = JSON.parse(finalJsonString);
+            
+            // 3. Document Generation
+            let finalPFEHtml = '';
+
+            // 3.1 Generate Treatment Plan 
+            if (aiResponse.treatment_plan) {
+                finalPFEHtml += generateTreatmentPlanHtml(aiResponse.treatment_plan, lang);
+            } else {
+                 finalPFEHtml += `<p class="text-red-500 font-medium">${T('plan_goal_header', lang) === 'Treatment Plan and Goals' ? 'AI could not generate the Treatment Plan and Goals section.' : 'AI ไม่สามารถสร้างส่วนของ **แผนการรักษาและเป้าหมาย** ได้'}</p>`;
+            }
+
+            // 3.2 Generate Relative Observation
+            finalPFEHtml += renderNewSection(
+                T('ai_doc_desc', lang), 
+                aiResponse.relative_observation, 
+                '#fffbeb', 
+                '#fcd34d', 
+                '#b45309'  
+            );
+
+            // 3.3 Generate Red Flags
+            finalPFEHtml += renderNewSection(
+                T('red_flags_desc', lang), 
+                aiResponse.red_flags, 
+                '#fef2f2', 
+                '#f87171', 
+                '#dc2626'  
+            );
+
+            // 3.4 Generate Medication Table (FIXED: Localized meal times)
+            finalPFEHtml += generateMedicationTable(patientData);
+
+
+            // 3.5 Generate PFE Content (Markdown)
+            finalPFEHtml += markdownToHtml(aiResponse.pfe_text);
+
+            // 3.6 Add fixed Self-Care table at the end
+            finalPFEHtml += generateSelfCareTable(lang);
+            
+            pfeContent.innerHTML = finalPFEHtml;
+
+            outputSection.classList.remove('hidden');
+
+        } catch (error) {
+            console.error("Error generating AI documents (PFE):", error);
+            const errorMessage = `<p class="text-red-600 font-bold p-4 bg-red-50 rounded">${T('raw_table_title', lang) === 'Item' ? 'AI Error: ' : 'เกิดข้อผิดพลาดในการเรียกใช้ AI (PFE Error): '} ${error.message}</p><p class="mt-2 text-sm text-gray-500">โปรดตรวจสอบข้อความแจ้งเตือนที่ชัดเจนใน **Console ของเบราว์เซอร์ (F12)** เพื่อวินิจฉัยปัญหา API หรือ JSON Parsing</p>`;
+            // If error, display error message but keep the self-care table for utility.
+            pfeContent.innerHTML = errorMessage + generateSelfCareTable(lang); 
+            outputSection.classList.remove('hidden');
+        } finally {
+            // *** End of Loading State (As requested) ***
+            generateBtn.disabled = false;
+            loadingSpinner.classList.add('hidden');
+            // Scroll to the result section
+            outputSection.scrollIntoView({ behavior: 'smooth' });
+            // *** End of Loading State ***
+        }
+    }
+    
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        syncDates();
+        updateUIText(documentLanguageSelect.value); // Initial load
+        
+        // Listeners for date and language changes
+        document.querySelectorAll('.score-date-input').forEach(input => {
+            input.addEventListener('change', syncDates);
+        });
+        
+        documentLanguageSelect.addEventListener('change', (event) => {
+            updateUIText(event.target.value);
+        });
+    });
+    patientForm.addEventListener('submit', generateDocuments);
+    printBtn.addEventListener('click', () => window.print());
+
+</script>
+
+</body>
+</html>
