@@ -242,13 +242,9 @@
 
 <div id="app" class="container-content">
 
-    <h1 class="text-3xl font-bold text-center my-6 text-blue-700" id="app-title">ระบบจำลอง: สรุปและแนะนำผู้ป่วยโดย AI (Ortho Focus)</h1>
+    <h1 class="text-3xl font-bold text-center my-6 text-blue-700" id="app-title">สรุปและแนะนำผู้ป่วยด้าน Orthopaedics</h1>
     
-    <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4 no-print" role="alert">
-      <strong class="font-bold">อัปเดต:</strong> 
-      <span class="block sm:inline">โค้ดนี้ใช้ **ข้อมูลตัวอย่าง** เป็นกรณีการผ่าตัดเปลี่ยนข้อเข่าเทียม (TKA) และรองรับการเลือก **ภาษาของเอกสาร** (เพิ่ม อาหรับ, จีน, ญี่ปุ่น)</span>
-    </div>
-
+    
     <div id="input-form" class="paper-container mb-8 no-print">
         <form id="patient-form" class="space-y-8">
 
@@ -442,34 +438,34 @@
                                 <td>1. WOMAC Score (เต็ม 96, ต่ำ=ดี)</td>
                                 <td><input type="text" name="score_womac_preop1" class="w-full p-1" value="80"></td>
                                 <td><input type="text" name="score_womac_preop2" class="w-full p-1" value="75"></td>
-                                <td><input type="text" name="score_womac_postop1" class="w-full p-1" value="35"></td>
-                                <td><input type="text" name="score_womac_postop2" class="w-full p-1" value="20"></td>
-                                <td><input type="text" name="score_womac_postop3" class="w-full p-1" value="15"></td>
+                                <td><input type="text" name="score_womac_postop1" class="w-full p-1" value="70"></td>
+                                <td><input type="text" name="score_womac_postop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_womac_postop3" class="w-full p-1" value="-"></td>
                             </tr>
                             <tr>
                                 <td>2. VAS Pain Score (เต็ม 10, ต่ำ=ดี)</td>
-                                <td><input type="text" name="score_vas_preop1" class="w-full p-1" value="8"></td>
-                                <td><input type="text" name="score_vas_preop2" class="w-full p-1" value="8"></td>
-                                <td><input type="text" name="score_vas_postop1" class="w-full p-1" value="3"></td>
-                                <td><input type="text" name="score_vas_postop2" class="w-full p-1" value="2"></td>
-                                <td><input type="text" name="score_vas_postop3" class="w-full p-1" value="1"></td>
+                                <td><input type="text" name="score_vas_preop1" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_vas_preop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_vas_postop1" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_vas_postop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_vas_postop3" class="w-full p-1" value="-"></td>
                             </tr>
                             <tr>
                                 <td>3. ODI Score (เต็ม 100, ต่ำ=ดี)</td>
-                                <td><input type="text" name="score_odi_preop1" class="w-full p-1" value="40"></td>
-                                <td><input type="text" name="score_odi_preop2" class="w-full p-1" value="45"></td>
-                                <td><input type="text" name="score_odi_postop1" class="w-full p-1" value="25"></td>
-                                <td><input type="text" name="score_odi_postop2" class="w-full p-1" value="15"></td>
-                                <td><input type="text" name="score_odi_postop3" class="w-full p-1" value="10"></td>
+                                <td><input type="text" name="score_odi_preop1" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_odi_preop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_odi_postop1" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_odi_postop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_odi_postop3" class="w-full p-1" value="-"></td>
                             </tr>
                             <tr>
                                 <td>4. Others (ระบุชื่อ)</td>
-                                <td><input type="text" name="score_others_preop1" class="w-full p-1" value="N/A"></td>
-                                <td><input type="text" name="score_others_preop2" class="w-full p-1" value="N/A"></td>
-                                <td><input type="text" name="score_others_postop1" class="w-full p-1" value="N/A"></td>
+                                <td><input type="text" name="score_others_preop1" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_others_preop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_others_postop1" class="w-full p-1" value="-"></td>
                                 
-                                <td><input type="text" name="score_others_postop2" class="w-full p-1" value="N/A"></td>
-                                <td><input type="text" name="score_others_postop3" class="w-full p-1" value="N/A"></td>
+                                <td><input type="text" name="score_others_postop2" class="w-full p-1" value="-"></td>
+                                <td><input type="text" name="score_others_postop3" class="w-full p-1" value="-"></td>
                             </tr>
                         </tbody>
                     </table>
