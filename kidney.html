@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบ HIS: สรุปและแนะนำผู้ป่วยโดย AI - (Nephrology Focus)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles & Typography (ไม่เปลี่ยนแปลง) */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        .container-content {
+            max-width: 1200px;
+            margin: auto;
+            padding: 1rem;
+        }
+        .paper-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .section-header {
+            border-left: 5px solid #0056b3;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .input-group textarea, .input-group input, .input-group select {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .input-group textarea:focus, .input-group input:focus, .input-group select:focus {
+            border-color: #3b82f6;
+            ring: 2px;
+            ring-color: #3b82f6;
+        }
+        .visit-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: box-shadow 0.3s;
+        }
+        .visit-card:hover {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        /* .pfe-section-card (สีเขียวอ่อนเดิม) - ดูสบายตาอยู่แล้ว ไม่เปลี่ยน */
+        .pfe-section-card {
+            background-color: #f0fdfa; /* Teal-50 */
+            border: 1px solid #99f6e4; /* Teal-200 */
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        
+        /* Styles for Visit Summary Table (Raw Data) (ไม่เปลี่ยนแปลง) */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .summary-table th, .summary-table td {
+            padding: 10px 15px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+        .summary-table th {
+            width: 20%; 
+            font-weight: 700;
+            background-color: #f3f4f6; 
+            color: #1f2937; 
+        }
+        .summary-table td {
+            width: 80%;
+            background-color: #ffffff;
+            color: #374151; 
+            line-height: 1.6;
+        }
+        #visit-history-table th {
+            text-align: center;
+            background-color: #2563eb; 
+            color: white;
+            padding: 12px 15px;
+            font-size: 1rem;
+        }
+        #visit-history-table td {
+            padding: 10px;
+            background-color: white;
+        }
+
+        /* Styles for Lab Table (ไม่เปลี่ยนแปลง) */
+        .lab-table th, .lab-table td {
+            white-space: nowrap;
+            padding: 8px 6px;
+            font-size: 0.8rem;
+        }
+        .lab-table th:first-child, .lab-table td:first-child {
+             text-align: left;
+             font-weight: 500;
+             white-space: normal;
+        }
+        .lab-table input {
+            width: 100%;
+            padding: 2px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+        .lab-date-input {
+            width: 100%;
+            padding: 2px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        /* Styles for Self-Care and Medication Tables (ไม่เปลี่ยนแปลง) */
+        .general-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            border: 1px solid #06b6d4; /* Cyan-500 for distinction */
+            font-size: 0.9rem;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .general-table th, .general-table td {
+            border: 1px solid #2dd4bf; /* Teal-400 */
+            padding: 8px 12px;
+            text-align: left; 
+            vertical-align: top;
+        }
+        .general-table th {
+            background-color: #06b6d4; /* Cyan-500 */
+            color: white;
+            font-weight: 700;
+            text-align: center; 
+        }
+        .general-table tr:nth-child(even) td {
+            background-color: #f0f9ff; /* Blue-50 */
+        }
+        .medication-table th {
+            background-color: #1d4ed8; /* Blue-700 */
+            color: white;
+            font-weight: 700;
+            text-align: center; 
+        }
+        .medication-table tr:nth-child(even) td {
+            background-color: #e0f2fe; /* Sky-100 */
+        }
+        .medication-table td {
+            text-align: center;
+        }
+
+        /* Editable Content Focus Style (ไม่เปลี่ยนแปลง) */
+        [contenteditable] {
+            cursor: text;
+            min-height: 20px;
+            transition: all 0.1s ease-in-out;
+        }
+        [contenteditable]:hover {
+            outline: 1px dashed #9ca3af; /* Gray-400 */
+        }
+        [contenteditable]:focus {
+            outline: 2px dashed #10b981; /* Emerald-500 */
+            background-color: #f0fdfa; /* Teal-50 - subtle change */
+            box-shadow: 0 0 0 1px #10b981;
+        }
+        
+        /* Plan & Goal Specific Styles (สีฟ้า - ไม่เปลี่ยนแปลง) */
+        .plan-header-card {
+            background-color: #eff6ff; /* Blue-50 (from Red-50) */
+            border: 1px solid #bfdbfe; /* Blue-200 (from Red-200) */
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .plan-goal {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2563eb; /* Blue-600 (from Red-600) */
+        }
+        .plan-progress {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #dbeafe; /* Blue-100 (from Red-100) */
+            margin: 0.5rem 0 1rem 0;
+            overflow: hidden;
+        }
+        .plan-progress-bar {
+            height: 100%;
+            background-color: #3b82f6; /* Blue-500 (from Red-500) */
+            transition: width 1s;
+        }
+        .plan-phase-card {
+            background-color: #fff7ed; 
+            border: 1px solid #fed7aa; 
+            padding: 0.75rem;
+            border-radius: 6px;
+            min-height: 120px;
+        }
+        .plan-phase-title {
+            font-weight: 700;
+            color: #c2410c; 
+            margin-bottom: 0.25rem;
+        }
+
+        /* Print Styles (ไม่เปลี่ยนแปลง) */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .container-content {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .paper-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            [contenteditable]:hover, [contenteditable]:focus {
+                outline: none !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+            }
+            .pfe-section-card {
+                 box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+<div id="app" class="container-content">
+
+    <h1 class="text-3xl font-bold text-center my-6 text-blue-700" id="app-title">ระบบจำลอง: สรุปและแนะนำผู้ป่วยโดย AI (Nephrology Focus)</h1>
+    
+    
+    <div id="input-form" class="paper-container mb-8 no-print">
+        <form id="patient-form" class="space-y-8">
+
+            <div class="border-b pb-4">
+                <div class="section-header">
+                    <h2 class="text-xl font-bold text-blue-600" id="input-header">1. ข้อมูลพื้นฐานผู้ป่วย (Patient History)</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="input-group">
+                        <label for="name" id="label-name">ชื่อ-นามสกุล / HN</label>
+                        <input type="text" id="name" name="name" class="w-full" value="นางสดใส ห่วงใย (HN: 66789)" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="age" id="label-age">อายุ / เพศ / BMI</label>
+                        <input type="text" id="age" name="age" class="w-full" value="68 ปี / หญิง / BMI 26 (155cm, 62kg)">
+                    </div>
+                    <div class="input-group">
+                        <label for="documentLanguage" id="label-language">ภาษาของเอกสาร (Document Language)</label>
+                        <select id="documentLanguage" name="documentLanguage" class="w-full">
+                            <option value="th" selected>ไทย (Thai)</option>
+                            <option value="en">อังกฤษ (English)</option>
+                            <option value="ar">อาหรับ (Arabic)</option>
+                            <option value="zh">จีน (Chinese)</option>
+                            <option value="ja">ญี่ปุ่น (Japanese)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="underlying" id="label-underlying">โรคประจำตัว (Underlying)</label>
+                        <input type="text" id="underlying" name="underlying" class="w-full" value="CKD Stage 4 (eGFR 25), DM type 2, HPN, DLP">
+                    </div>
+                    <div class="input-group">
+                        <label for="allergy" id="label-allergy">ประวัติการแพ้ยา/อาหาร (Allergy)</label>
+                        <textarea id="allergy" name="allergy" rows="2" class="w-full">Penicillin (ผื่น)</textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="pastHistory" id="label-pastHistory">ประวัติการเจ็บป่วย/ผ่าตัดที่สำคัญ (Past/Surgical History)</label>
+                        <textarea id="pastHistory" name="pastHistory" rows="2" class="w-full">ผ่าตัดต้อกระจก (Cataract surgery) 5 ปีก่อน</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="section-header">
+                    <h2 class="text-xl font-bold text-blue-600">2. ประวัติการรักษา 5 ครั้งล่าสุด</h2>
+                    <p class="text-sm text-gray-500">วันที่ในการรักษาถูกกำหนดโดยวันที่ในตาราง Lab ด้านล่าง</p>
+                </div>
+                
+                <div id="visit-5" class="visit-card bg-blue-50 border-blue-300">
+                    <h3 class="text-lg font-bold mb-2 text-blue-700 flex justify-between items-center">
+                        การรักษาครั้งล่าสุด (Visit 5 - eGFR 25)
+                        <input type="date" id="visitDate_5_input" name="visitDate_5" class="p-1 text-sm border-blue-500" value="2026-06-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI (อาการสำคัญ/ประวัติปัจจุบัน)</label>
+                            <textarea name="ccPi_5" rows="2" class="w-full">ติดตามอาการ. ยังเพลีย. มีบวมที่ขา 2 ข้าง. เริ่มคัน (pruritus). เบื่ออาหาร.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE (ตรวจร่างกาย) / Vital Sign</label>
+                            <textarea name="pe_5" rows="2" class="w-full">BP: 140/85 mmHg. Pitting edema 1+ at ankles. Pale.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis (วินิจฉัยโรค)</label>
+                            <textarea name="diag_5" rows="2" class="w-full">CKD Stage 4 (approaching Stage 5), eGFR 25. Uremic symptoms (pruritus, fatigue). Anemia.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine (ยาที่ได้รับ) - <span class="text-red-500 font-semibold">แยกยาตามเวลาในตาราง</span></label>
+                            <textarea name="med_5" rows="2" class="w-full">เช้า: Amlodipine 10 mg, Losartan 50 mg, Folic acid 5 mg, Sodium Bicarbonate 1 tab
+กลางวัน: Sodium Bicarbonate 1 tab
+เย็น: Sodium Bicarbonate 1 tab
+ก่อนนอน: Atorvastatin 10 mg
+ยา PRN: Loratadine 10 mg (แก้คัน)</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_5" rows="2" class="w-full">Lab: eGFR 25, Cr 2.8, K+ 4.9, Phos 4.8 (เริ่มสูง), Hb 10.0, A1c 7.2%. (ตามตาราง Lab)</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_5" rows="2" class="w-full">eGFR ลดลงต่อเนื่อง. มีอาการของ Uremia. Hb/Phos เริ่มมีปัญหา. ควบคุม BP/A1c พอใช้.</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_5" rows="1" class="w-full">เน้นย้ำการคุมอาหาร (โปรตีน, เกลือ, ฟอสฟอรัส). เริ่มให้ข้อมูลเรื่องการบำบัดทดแทนไต (RRT options - HD/PD/Transplant).</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="visit-4" class="visit-card bg-gray-50">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-center">
+                        การรักษาครั้งก่อน 1 (Visit 4 - eGFR 28)
+                        <input type="date" id="visitDate_4_input" name="visitDate_4" class="p-1 text-sm border-gray-400" value="2026-03-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI</label>
+                            <textarea name="ccPi_4" rows="2" class="w-full">มาตามนัด. รู้สึกเหนื่อยง่ายขึ้นเล็กน้อย (fatigue). เบื่ออาหาร.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE / Vital Sign</label>
+                            <textarea name="pe_4" rows="2" class="w-full">BP: 145/90 mmHg. Trace pitting edema (+). Pale conjunctiva.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis</label>
+                            <textarea name="diag_4" rows="2" class="w-full">CKD Stage 4 (eGFR 28), uncontrolled HPN, Anemia of CKD.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine</label>
+                            <textarea name="med_4" rows="2" class="w-full">เพิ่ม Amlodipine 10 mg. หยุด Metformin (เนื่องจาก eGFR < 30). เริ่ม Folic acid. เริ่ม Sodium Bicarbonate (Bicarb) 1 tab TID.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_4" rows="2" class="w-full">Lab: eGFR 28, Cr 2.5, K+ 4.8, Hb 10.5 (ซีดลง), A1c 7.8%.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_4" rows="2" class="w-full">ไตเสื่อมลง (eGFR 28). ความดันสูง. เริ่มมีภาวะซีด และ metabolic acidosis.</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_4" rows="1" class="w-full">ปรับเพิ่มยาลดความดัน. เน้นย้ำการคุมเกลือเข้มงวด. นัด F/U 3 เดือน.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="visit-3" class="visit-card bg-gray-50">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-center">
+                        การรักษาครั้งก่อน 2 (Visit 3 - eGFR 30)
+                        <input type="date" id="visitDate_3_input" name="visitDate_3" class="p-1 text-sm border-gray-400" value="2025-12-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI</label>
+                            <textarea name="ccPi_3" rows="2" class="w-full">มาตามนัด. ไม่มีอาการผิดปกติ</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE / Vital Sign</label>
+                            <textarea name="pe_3" rows="2" class="w-full">BP: 130/80 mmHg. No edema.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis</label>
+                            <textarea name="diag_3" rows="2" class="w-full">CKD Stage 3b (eGFR 30), DM, HPN.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine</label>
+                            <textarea name="med_3" rows="2" class="w-full">Amlodipine 5 mg, Losartan 50 mg, Metformin 500 mg, Atorvastatin 10 mg.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_3" rows="2" class="w-full">Lab: eGFR 30, Cr 2.2, K+ 4.6, Hb 12.0, A1c 7.3%.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_3" rows="2" class="w-full">ควบคุมความดันและน้ำตาลดี. eGFR คงที่จาก 3 เดือนก่อน.</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_3" rows="1" class="w-full">เน้นย้ำการคุมอาหารเค็ม/หวาน. นัดติดตาม 3 เดือน.</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="visit-2" class="visit-card bg-gray-50">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-center">
+                        การรักษาครั้งก่อน 3 (Visit 2 - eGFR 35)
+                        <input type="date" id="visitDate_2_input" name="visitDate_2" class="p-1 text-sm border-gray-400" value="2025-09-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI</label>
+                            <textarea name="ccPi_2" rows="2" class="w-full">มาตามนัด. ไม่มีอาการผิดปกติ</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE / Vital Sign</label>
+                            <textarea name="pe_2" rows="2" class="w-full">BP: 135/85 mmHg. No edema.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis</label>
+                            <textarea name="diag_2" rows="2" class="w-full">CKD Stage 3b (eGFR 35), DM, HPN.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine</label>
+                            <textarea name="med_2" rows="2" class="w-full">Amlodipine 5 mg, Losartan 50 mg, Metformin 500 mg, Atorvastatin 10 mg.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_2" rows="2" class="w-full">Lab: eGFR 35, Cr 2.0, K+ 4.4, Hb 12.5, A1c 7.5%.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_2" rows="2" class="w-full">ควบคุมความดันและน้ำตาลพอใช้. eGFR ลดลงจาก 6 เดือนก่อน.</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_2" rows="1" class="w-full">แนะนำคุมอาหารเค็ม/หวานเข้มงวด. นัดติดตาม 3 เดือน.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="visit-1" class="visit-card bg-gray-50">
+                    <h3 class="text-lg font-bold mb-2 text-gray-700 flex justify-between items-center">
+                        การรักษาครั้งก่อน 4 (Visit 1 - eGFR 40)
+                        <input type="date" id="visitDate_1_input" name="visitDate_1" class="p-1 text-sm border-gray-400" value="2025-06-15">
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label>CC/PI</label>
+                            <textarea name="ccPi_1" rows="2" class="w-full">มาตามนัดติดตามโรคไต, เบาหวาน, ความดัน. ไม่มีอาการบวม. ปกติดี.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>PE / Vital Sign</label>
+                            <textarea name="pe_1" rows="2" class="w-full">BP: 135/85 mmHg. No edema. Lungs clear.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Diagnosis</label>
+                            <textarea name="diag_1" rows="2" class="w-full">CKD Stage 3b (eGFR 40), DM, HPN.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Medicine</label>
+                            <textarea name="med_1" rows="2" class="w-full">Amlodipine 5 mg, Losartan 50 mg, Metformin 500 mg, Atorvastatin 10 mg.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Lab / Xray</label>
+                            <textarea name="labXray_1" rows="2" class="w-full">Lab: eGFR 40, Cr 1.8, K+ 4.5, Hb 12.0, A1c 7.5%.</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>ผลการรักษา (Treatment Outcome)</label>
+                            <textarea name="treatmentOutcome_1" rows="2" class="w-full">ควบคุมความดันและน้ำตาลพอใช้. eGFR คงที่จาก 6 เดือนก่อน.</textarea>
+                        </div>
+                        <div class="input-group col-span-2">
+                            <label>Others / Plan</label>
+                            <textarea name="others_1" rows="1" class="w-full">แนะนำคุมอาหารเค็ม/หวาน. นัดติดตาม 3 เดือน (เนื่องจาก eGFR < 45).</textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="border-b pb-4 mt-8">
+                <div class="section-header">
+                    <h2 class="text-xl font-bold text-blue-600">3. ผลการตรวจทางห้องปฏิบัติการ (Kidney Lab Panel)</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm general-table lab-table">
+                        <thead>
+                            <tr>
+                                <th class="w-1/6">รายการ Lab (ค่าอ้างอิง)</th>
+                                <th class="w-1/6">Visit 1</th>
+                                <th class="w-1/6">Visit 2</th>
+                                <th class="w-1/6">Visit 3</th>
+                                <th class="w-1/6">Visit 4</th>
+                                <th class="w-1/6">Visit 5 (ล่าสุด)</th>
+                            </tr>
+                            <tr>
+                                <th>วันที่ประเมิน</th>
+                                <td><input type="date" id="lab_date_1" name="lab_date_1" class="lab-date-input" value="2025-06-15"></td>
+                                <td><input type="date" id="lab_date_2" name="lab_date_2" class="lab-date-input" value="2025-09-15"></td>
+                                <td><input type="date" id="lab_date_3" name="lab_date_3" class="lab-date-input" value="2025-12-15"></td>
+                                <td><input type="date" id="lab_date_4" name="lab_date_4" class="lab-date-input" value="2026-03-15"></td>
+                                <td><input type="date" id="lab_date_5" name="lab_date_5" class="lab-date-input" value="2026-06-15"></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1. Creatinine (mg/dL)</td>
+                                <td><input type="text" name="lab_creatinine_d1" value="1.8"></td>
+                                <td><input type="text" name="lab_creatinine_d2" value="2.0"></td>
+                                <td><input type="text" name="lab_creatinine_d3" value="2.2"></td>
+                                <td><input type="text" name="lab_creatinine_d4" value="2.5"></td>
+                                <td><input type="text" name="lab_creatinine_d5" value="2.8"></td>
+                            </tr>
+                             <tr>
+                                <td>2. eGFR (mL/min) (> 90)</td>
+                                <td><input type="text" name="lab_egfr_d1" value="40"></td>
+                                <td><input type="text" name="lab_egfr_d2" value="35"></td>
+                                <td><input type="text" name="lab_egfr_d3" value="30"></td>
+                                <td><input type="text" name="lab_egfr_d4" value="28"></td>
+                                <td><input type="text" name="lab_egfr_d5" value="25"></td>
+                            </tr>
+                            <tr>
+                                <td>3. BUN (mg/dL) (7-20)</td>
+                                <td><input type="text" name="lab_bun_d1" value="30"></td>
+                                <td><input type="text" name="lab_bun_d2" value="35"></td>
+                                <td><input type="text" name="lab_bun_d3" value="40"></td>
+                                <td><input type="text" name="lab_bun_d4" value="45"></td>
+                                <td><input type="text" name="lab_bun_d5" value="55"></td>
+                            </tr>
+                            <tr>
+                                <td>4. Potassium (K+) (3.5-5.0)</td>
+                                <td><input type="text" name="lab_k_d1" value="4.5"></td>
+                                <td><input type="text" name="lab_k_d2" value="4.4"></td>
+                                <td><input type="text" name="lab_k_d3" value="4.6"></td>
+                                <td><input type="text" name="lab_k_d4" value="4.8"></td>
+                                <td><input type="text" name="lab_k_d5" value="4.9"></td>
+                            </tr>
+                            <tr>
+                                <td>5. Phosphorus (Phos) (2.5-4.5)</td>
+                                <td><input type="text" name="lab_phos_d1" value="4.0"></td>
+                                <td><input type="text" name="lab_phos_d2" value="4.2"></td>
+                                <td><input type="text" name="lab_phos_d3" value="4.5"></td>
+                                <td><input type="text" name="lab_phos_d4" value="4.6"></td>
+                                <td><input type="text" name="lab_phos_d5" value="4.8"></td>
+                            </tr>
+                             <tr>
+                                <td>6. Hemoglobin (Hb) (g/dL)</td>
+                                <td><input type="text" name="lab_hb_d1" value="12.0"></td>
+                                <td><input type="text" name="lab_hb_d2" value="12.5"></td>
+                                <td><input type="text" name="lab_hb_d3" value="12.0"></td>
+                                <td><input type="text" name="lab_hb_d4" value="10.5"></td>
+                                <td><input type="text" name="lab_hb_d5" value="10.0"></td>
+                            </tr>
+                             <tr>
+                                <td>7. Albumin (g/dL) (>3.5)</td>
+                                <td><input type="text" name="lab_albumin_d1" value="4.0"></td>
+                                <td><input type="text" name="lab_albumin_d2" value="4.0"></td>
+                                <td><input type="text" name="lab_albumin_d3" value="3.9"></td>
+                                <td><input type="text" name="lab_albumin_d4" value="3.8"></td>
+                                <td><input type="text" name="lab_albumin_d5" value="3.7"></td>
+                            </tr>
+                            <tr>
+                                <td>8. HbA1c (DM Control) (< 7.0%)</td>
+                                <td><input type="text" name="lab_a1c_d1" value="7.5%"></td>
+                                <td><input type="text" name="lab_a1c_d2" value="7.5%"></td>
+                                <td><input type="text" name="lab_a1c_d3" value="7.3%"></td>
+                                <td><input type="text" name="lab_a1c_d4" value="7.8%"></td>
+                                <td><input type="text" name="lab_a1c_d5" value="7.2%"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <div class="flex justify-center mt-8">
+                <button type="submit" id="generate-btn" class="w-full md:w-auto flex items-center justify-center py-3 px-8 border border-transparent rounded-full shadow-lg text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                    <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    สร้างสรุปและคำแนะนำโดย AI
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="output-section" class="hidden">
+        <h2 class="text-2xl font-bold text-center my-6 text-indigo-700" id="output-header">ผลลัพธ์เอกสารที่สร้างโดยระบบ</h2>
+
+        <div class="flex justify-center mb-6 no-print space-x-4">
+            <button id="print-btn" class="flex justify-center py-2 px-6 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                พิมพ์เอกสารทั้งหมด
+            </button>
+        </div>
+
+        <div id="visit-summary-doc" class="paper-container mb-8 border-t-8 border-indigo-500">
+            <h3 class="text-xl font-bold text-indigo-700 mb-4 border-b pb-2" id="summary-doc-title">สรุปประวัติการรักษา 5 ครั้งล่าสุด </h3>
+            <div id="summary-content" class="text-base space-y-3">
+                <p class="text-gray-500">กดปุ่ม **"สร้างสรุปและคำแนะนำโดย AI"** เพื่อดูผลลัพธ์</p>
+            </div>
+        </div>
+        
+        <div id="pfe-doc" class="paper-container mb-8 border-t-8 border-teal-500">
+            <h3 class="text-xl font-bold text-teal-700 mb-4 border-b pb-2" id="pfe-doc-title">เอกสารให้ความรู้แก่ผู้ป่วย (Patient Education - PFE)</h3>
+            <div id="pfe-content" class="text-base space-y-3">
+                <p class="text-gray-500">กดปุ่ม **"สร้างสรุปและคำแนะนำโดย AI"** เพื่อดูผลลัพธ์</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------------------------------------------------------
+    // !!! สำคัญมาก: กรุณาเปลี่ยน API Key ตัวอย่างนี้เป็น Key จริงของคุณ ที่ได้จาก Google AI Studio !!!
+    // --------------------------------------------------------------------------------------------------
+    const apiKey = "AIzaSyBX4x_sffJXdjp5tpQGpTgMbNLipDGKOC8"; // Placeholder. Please use your actual key here.
+
+    // --- DOM Elements (ไม่เปลี่ยนแปลง) ---
+    const patientForm = document.getElementById('patient-form');
+    const outputSection = document.getElementById('output-section');
+    const summaryContent = document.getElementById('summary-content');
+    const pfeContent = document.getElementById('pfe-content');
+    const generateBtn = document.getElementById('generate-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const printBtn = document.getElementById('print-btn');
+    const documentLanguageSelect = document.getElementById('documentLanguage');
+
+
+    // --- Gemini API Configuration (ไม่เปลี่ยนแปลง) ---
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    // --- Localization Text Mapping (ไม่เปลี่ยนแปลง) ---
+    function getLocalizedText(key, lang) {
+        const texts = {
+            // New stable keys for meal times
+            meal_morning: { th: 'เช้า', en: 'Morning', ar: 'الصباح', zh: '早上', ja: '朝' },
+            meal_noon: { th: 'กลางวัน', en: 'Noon', ar: 'الظهيرة', zh: '中午', ja: '昼' },
+            meal_evening: { th: 'เย็น', en: 'Evening', ar: 'المساء', zh: '晚上', ja: '夕方' },
+            meal_bedtime: { th: 'ก่อนนอน', en: 'Bedtime', ar: 'قبل النوم', zh: '睡前', ja: '就寝前' },
+            
+            // Other Text Keys
+            app_title: {
+                th: "สรุปและแนะนำผู้ป่วย (Nephrology Focus)",
+                en: "Simulator: AI-Generated Patient Summary and Recommendations (Nephrology Focus)",
+                ar: "محاكي: ملخص المريض وتوصيات الذكاء الاصطناعي (تركيز أمراض الكلى)",
+                zh: "模拟器：AI生成的患者总结和建议（肾脏病学重点）",
+                ja: "シミュレーター：AIによる患者サマリーと推奨事項を生成"
+            },
+            input_header: {
+                th: "1. ข้อมูลพื้นฐานผู้ป่วย (Patient History)",
+                en: "1. Patient History",
+                ar: "1. تاريخ المريض",
+                zh: "1. 患者病史",
+                ja: "1. 患者の病歴"
+            },
+            language: {
+                th: "ภาษาของเอกสาร (Document Language)",
+                en: "Document Language",
+                ar: "لغة الوثيقة",
+                zh: "文件语言",
+                ja: "ドキュメント言語"
+            },
+            name: {
+                th: "ชื่อ-นามสกุล / HN",
+                en: "Name / HN",
+                ar: "الاسم / رقم ملف المريض",
+                zh: "姓名 / 病历号",
+                ja: "氏名 / HN"
+            },
+            age: {
+                th: "อายุ / เพศ / BMI",
+                en: "Age / Sex / BMI",
+                ar: "العمر / الجنس / مؤشر كتلة الجسم",
+                zh: "年龄 / 性别 / BMI",
+                ja: "年齢 / 性別 / BMI"
+            },
+            underlying: {
+                th: "โรคประจำตัว (Underlying)",
+                en: "Underlying Diseases",
+                ar: "الأمراض الكامنة",
+                zh: "基础疾病",
+                ja: "基礎疾患"
+            },
+            past_history: {
+                th: "ประวัติการเจ็บป่วย/ผ่าตัดที่สำคัญ",
+                en: "Past/Surgical History",
+                ar: "تاريخ المرض/الجراحة السابق",
+                zh: "既往/手术史",
+                ja: "既往歴/手術歴"
+            },
+            allergy: {
+                th: "ประวัติการแพ้ยา/อาหาร",
+                en: "Drug/Food Allergy",
+                ar: "تاريخ حساسية الدواء/الطعام",
+                zh: "药物/食物过敏史",
+                ja: "薬物/食物アレルギー"
+            },
+            generate_btn: {
+                th: "สร้างสรุปและคำแนะนำโดย AI",
+                en: "Generate Summary and Recommendations by AI",
+                ar: "إنشاء ملخص وتوصيات بالذكاء الاصطناعي",
+                zh: "生成AI总结和建议",
+                ja: "AIによるサマリーと推奨事項を生成"
+            },
+            output_header: {
+                th: "ผลลัพธ์เอกสารที่สร้างโดยระบบ",
+                en: "System Generated Documents",
+                ar: "الوثائق التي تم إنشاؤها بواسطة النظام",
+                zh: "系统生成的文件",
+                ja: "システム生成ドキュメント"
+            },
+            print_btn: {
+                th: "พิมพ์เอกสารทั้งหมด",
+                en: "Print All Documents",
+                ar: "طباعة جميع الوثائق",
+                zh: "打印所有文件",
+                ja: "すべてのドキュメントを印刷"
+            },
+            summary_doc_title: {
+                th: "สรุปประวัติการรักษา 5 ครั้งล่าสุด (",
+                en: "Latest 5 Visit History ",
+                ar: "تاريخ آخر 5 زيارات (بيانات خام)",
+                zh: "最近5次就诊历史（原始数据）",
+                ja: "最新の5回の受診履歴（生データ）"
+            },
+            pfe_doc_title: {
+                th: "เอกสารให้ความรู้แก่ผู้ป่วย (Patient Education - PFE)",
+                en: "Patient Education Document (PFE)",
+                ar: "وثيقة توعية المريض (PFE)",
+                zh: "患者教育文件（PFE）",
+                ja: "患者教育資料（PFE）"
+            },
+            raw_table_title: {
+                th: "รายการ",
+                en: "Item",
+                ar: "البند",
+                zh: "项目",
+                ja: "項目"
+            },
+            raw_table_visit5: {
+                th: "ครั้งที่ 5 (ล่าสุด:",
+                en: "Visit 5 (Latest:",
+                ar: "الزيارة الخامسة (الأخيرة:",
+                zh: "第5次就诊（最近：",
+                ja: "5回目の受診（最新："
+            },
+            raw_table_visit4: {
+                th: "ครั้งที่ 4 (",
+                en: "Visit 4 (",
+                ar: "الزيارة الرابعة (",
+                zh: "第4次就诊（",
+                ja: "4回目の受診（"
+            },
+             raw_table_visit3: {
+                th: "ครั้งที่ 3 (",
+                en: "Visit 3 (",
+                ar: "الزيارة الثالثة (",
+                zh: "第3次就诊（",
+                ja: "3回目の受診（"
+            },
+            raw_table_visit2: {
+                th: "ครั้งที่ 2 (",
+                en: "Visit 2 (",
+                ar: "الزيارة الثانية (",
+                zh: "第2次就诊（",
+                ja: "2回目の受診（"
+            },
+            raw_table_visit1: {
+                th: "ครั้งที่ 1 (",
+                en: "Visit 1 (",
+                ar: "الزيارة الأولى (",
+                zh: "第1次就诊（",
+                ja: "1回目の受診（"
+            },
+            raw_cc: {
+                th: "CC/อาการสำคัญ",
+                en: "CC/Chief Complaint",
+                ar: "الشكوى الرئيسية",
+                zh: "主诉",
+                ja: "主訴"
+            },
+            raw_pe: {
+                th: "PE/VS",
+                en: "PE/VS",
+                ar: "الفحص البدني/العلامات الحيوية",
+                zh: "体检/生命体征",
+                ja: "身体診察/バイタルサイン"
+            },
+            raw_diag: {
+                th: "Diagnosis",
+                en: "Diagnosis",
+                ar: "التشخيص",
+                zh: "诊断",
+                ja: "診断"
+            },
+            raw_med: {
+                th: "Medication",
+                en: "Medication",
+                ar: "الأدوية",
+                zh: "用药",
+                ja: "投薬"
+            },
+            raw_lab: {
+                th: "Lab/Xray",
+                en: "Lab/Xray",
+                ar: "المختبر/الأشعة",
+                zh: "化验/X光",
+                ja: "検査/レントゲン"
+            },
+            raw_outcome: {
+                th: "ผลการรักษา (Outcome)",
+                en: "Treatment Outcome",
+                ar: "نتيجة العلاج",
+                zh: "治疗結果",
+                ja: "治療結果"
+            },
+            raw_plan: {
+                th: "Plan/Others",
+                en: "Plan/Others",
+                ar: "الخطة/أخرى",
+                zh: "计划/其他",
+                ja: "計画/その他"
+            },
+            med_table_title: {
+                th: "การใช้ยา (Medication Schedule)",
+                en: "Medication Schedule",
+                ar: "جدول الأدوية",
+                zh: "用药时间表",
+                ja: "服薬スケジュール"
+            },
+            med_meal: {
+                th: "มื้อ",
+                en: "Time",
+                ar: "الوقت",
+                zh: "时间",
+                ja: "時間"
+            },
+            med_before: {
+                th: "ก่อนอาหาร",
+                en: "Before Meal",
+                ar: "قبل الوجبة",
+                zh: "饭前",
+                ja: "食前"
+            },
+            med_after: {
+                th: "หลังอาหาร",
+                en: "After Meal",
+                ar: "بعد الوجبة",
+                zh: "饭后",
+                ja: "食後"
+            },
+            med_prn: {
+                th: "ยาใช้ตามอาการ (PRN)",
+                en: "As Needed Medication (PRN)",
+                ar: "الأدوية عند الحاجة (PRN)",
+                zh: "按需用药（PRN）",
+                ja: "頓服薬（PRN）"
+            },
+            med_none: {
+                th: "ไม่มี",
+                en: "N/A",
+                ar: "لا يوجد",
+                zh: "无",
+                ja: "なし"
+            },
+            self_care_title: {
+                th: "ตารางการดูแลตนเองและติดตามอาการ (Self-Care & Monitoring Plan)",
+                en: "Self-Care & Monitoring Plan Table",
+                ar: "جدول الرعاية الذاتية والمراقبة",
+                zh: "自我护理与监测计划表",
+                ja: "セルフケアとモニタリング計画表"
+            },
+            self_care_item: {
+                th: "รายการ",
+                en: "Item",
+                ar: "البند",
+                zh: "项目",
+                ja: "項目"
+            },
+            self_care_freq: {
+                th: "ความถี่ / เวลา",
+                en: "Frequency / Time",
+                ar: "التكرار / الوقت",
+                zh: "频率 / 时间",
+                ja: "頻度 / 時間"
+            },
+            self_care_action: {
+                th: "การดำเนินการ",
+                en: "Action",
+                ar: "الإجراء",
+                zh: "行动",
+                ja: "行動"
+            },
+            plan_goal_header: {
+                th: "แผนการรักษาและเป้าหมาย",
+                en: "Treatment Plan and Goals",
+                ar: "خطة العلاج والأهداف",
+                zh: "治疗计划和目标",
+                ja: "治療計画と目標"
+            },
+            plan_goal_label: {
+                th: "เป้าหมายการรักษา:",
+                en: "Treatment Goal:",
+                ar: "هدف العلاج:",
+                zh: "治疗目标:",
+                ja: "治療目標:"
+            },
+            plan_progress_label: {
+                th: "ความคืบหน้าของแผนการรักษา (อิงจากผล Lab):",
+                en: "Treatment Progress (Based on Labs):",
+                ar: "تقدم العلاج (بناءً على النتائج):",
+                zh: "治疗进展（基于化验结果）：",
+                ja: "治療の進捗状況（検査結果に基づく）："
+            },
+            plan_progress_achieved: {
+                th: "บรรลุเป้าหมายไปแล้ว",
+                en: "Goal achieved",
+                ar: "تم تحقيق الهدف",
+                zh: "已达成的目标",
+                ja: "達成された目標"
+            },
+            plan_phase_default: {
+                th: "ไม่ระบุ",
+                en: "Phase not specified",
+                ar: "المرحلة غير محددة",
+                zh: "阶段未指定",
+                ja: "フェーズ未指定"
+            },
+            plan_desc_default: {
+                th: "รายละเอียดแผนการรักษาเพิ่มเติม",
+                en: "Additional treatment plan details",
+                ar: "تفاصيل خطة العلاج الإضافية",
+                zh: "附加治疗计划详情",
+                ja: "追加の治療計画の詳細"
+            },
+            ai_doc_desc: {
+                th: "สิ่งที่ญาติควรสังเกตและให้การสนับสนุน",
+                en: "What Relatives Should Observe and Support",
+                ar: "ما يجب على الأقارب ملاحظته ودعمه",
+                zh: "亲属应观察和支持的事项",
+                ja: "親族が観察し、サポートすべきこと"
+            },
+            red_flags_desc: {
+                th: "เมื่อไหร่ที่ควรมาพบแพทย์ทันที (Red Flags)",
+                en: "When to See a Doctor Immediately (Red Flags)",
+                ar: "متى يجب مراجعة الطبيب فوراً (علامات الخطر)",
+                zh: "应立即就医的情况（红色警报）",
+                ja: "直ちに医師の診察を受けるべき時（レッドフラグ）"
+            }
+        };
+
+        // Check for stable key (e.g., meal_morning) or fallback to simple key (e.g., app_title)
+        if (texts[key] && texts[key][lang]) {
+            return texts[key][lang];
+        }
+        
+        // Fallback for old keys structure (if needed) - mainly for the main headers
+        const flatTexts = {};
+        Object.keys(texts).forEach(k => {
+            if (typeof texts[k] === 'object' && texts[k][lang]) {
+                flatTexts[k] = texts[k][lang];
+            }
+        });
+
+        return flatTexts[key] || texts[key]?.th || texts['app_title'].th; // Default to Thai if key/language not found
+    }
+
+    // --- Utility Functions ---
+
+    /**
+     * Synchronizes Visit History Dates with Lab Dates
+     * MODIFIED: To support 5 visits (1-5)
+     */
+    function syncDates() {
+        document.getElementById('visitDate_5_input').value = document.getElementById('lab_date_5').value;
+        document.getElementById('visitDate_4_input').value = document.getElementById('lab_date_4').value;
+        document.getElementById('visitDate_3_input').value = document.getElementById('lab_date_3').value;
+        document.getElementById('visitDate_2_input').value = document.getElementById('lab_date_2').value;
+        document.getElementById('visitDate_1_input').value = document.getElementById('lab_date_1').value;
+    }
+
+    /**
+     * Updates static UI text based on the selected language (ไม่เปลี่ยนแปลง)
+     */
+    function updateUIText(lang) {
+        document.getElementById('app-title').textContent = getLocalizedText('app_title', lang);
+        document.getElementById('input-header').textContent = getLocalizedText('input_header', lang);
+        document.getElementById('label-name').textContent = getLocalizedText('name', lang);
+        document.getElementById('label-age').textContent = getLocalizedText('age', lang);
+        document.getElementById('label-language').textContent = getLocalizedText('language', lang);
+        document.getElementById('label-underlying').textContent = getLocalizedText('underlying', lang);
+        document.getElementById('label-pastHistory').textContent = getLocalizedText('past_history', lang);
+        document.getElementById('label-allergy').textContent = getLocalizedText('allergy', lang);
+        
+        generateBtn.childNodes[3].nodeValue = getLocalizedText('generate_btn', 'th'); 
+        printBtn.textContent = getLocalizedText('print_btn', 'th');
+
+        document.getElementById('output-header').textContent = getLocalizedText('output_header', lang);
+        document.getElementById('summary-doc-title').textContent = getLocalizedText('summary_doc_title', lang);
+        document.getElementById('pfe-doc-title').textContent = getLocalizedText('pfe_doc_title', lang);
+    }
+
+    /**
+     * Exponential Backoff for Retries (ไม่เปลี่ยนแปลง)
+     */
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.ok) {
+                    return response;
+                } else if (response.status === 429 && i < maxRetries - 1) {
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    console.warn(`Rate limit hit. Retrying in ${delay.toFixed(0)}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    const errorBody = await response.text();
+                    console.error("API Response Body on Error:", errorBody);
+                    throw new Error(`API returned status ${response.status}: ${response.statusText}. Body: ${errorBody.substring(0, 150)}...`);
+                }
+            } catch (error) {
+                if (i === maxRetries - 1 || error.message.includes('400')) throw error;
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                console.error(`Fetch error. Retrying in ${delay.toFixed(0)}ms...`, error.message);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+
+    /**
+     * Parses form data
+     * MODIFIED: Loop changed to 5 visits (i=5 to i=1) and isCurrent is i===5
+     */
+    function serializeFormData(form) {
+        const formData = new FormData(form);
+        const data = {};
+        const lang = formData.get('documentLanguage');
+
+        // 1. Patient Demographic & History
+        data.demographic = {
+            name: formData.get('name'),
+            age: formData.get('age'),
+            underlying: formData.get('underlying'),
+            pastHistory: formData.get('pastHistory'),
+            allergy: formData.get('allergy'),
+            language: lang,
+        };
+
+        // 2. Visit History
+        data.visits = [];
+        for (let i = 5; i >= 1; i--) { // MODIFIED: Changed 3 to 5
+            data.visits.push({
+                index: i,
+                date: formData.get(`visitDate_${i}`), 
+                ccPi: formData.get(`ccPi_${i}`),
+                pe: formData.get(`pe_${i}`),
+                diag: formData.get(`diag_${i}`),
+                med: formData.get(`med_${i}`),
+                labXray: formData.get(`labXray_${i}`),
+                treatmentOutcome: formData.get(`treatmentOutcome_${i}`),
+                others: formData.get(`others_${i}`),
+                isCurrent: i === 5 // MODIFIED: isCurrent is 5
+            });
+        }
+        
+        // 3. Lab data (Already d1-d5, no changes needed here)
+        const labPrefixes = ['d1', 'd2', 'd3', 'd4', 'd5']; 
+        const labKeys = ['creatinine', 'egfr', 'bun', 'k', 'phos', 'hb', 'albumin', 'a1c']; 
+        
+        data.labs = { dates: {} };
+        labKeys.forEach(key => data.labs[key] = {}); 
+
+        labKeys.forEach(key => {
+            labPrefixes.forEach((prefix, index) => {
+                data.labs[key][prefix] = formData.get(`lab_${key}_${prefix}`);
+            });
+        });
+
+        labPrefixes.forEach((prefix, index) => {
+             data.labs.dates[prefix] = formData.get(`lab_date_${index + 1}`); 
+        });
+        
+        return data;
+    }
+
+    /**
+     * Generates the prompt, ADDING REASSURING TONE INSTRUCTION
+     * MODIFIED: Current visit references changed from 3 to 5 and trend comparison is d1 -> d5
+     */
+    function createPFEPrompt(patientData) {
+        const lang = patientData.demographic.language;
+        let langInstruction = '';
+        if (lang === 'en') langInstruction = "Please generate the entire response in **English**.";
+        else if (lang === 'ar') langInstruction = "الرجاء إنشاء الاستجابة بالكامل باللغة **العربية** (Arabic).";
+        else if (lang === 'zh') langInstruction = "请以**中文**（Chinese）生成完整的回复。";
+        else if (lang === 'ja') langInstruction = "応答全体を**日本語**（Japanese）で生成してください。";
+        else langInstruction = "โปรดสร้างเอกสารทั้งหมดเป็นภาษา **ไทย**";
+
+        let prompt = `คุณคือผู้ช่วยแพทย์ที่เชี่ยวชาญด้าน **โรคไตเรื้อรัง (CKD)** โปรดสร้างเอกสารให้ความรู้แก่ผู้ป่วย (PFE) และส่วนสรุปผลการรักษาในรูปแบบ JSON ที่ถูกต้องตาม Schema ที่กำหนดเท่านั้น โดยปฏิบัติตามกฎด้านล่าง:\n${langInstruction}\n\n`;
+        
+        prompt += "กฎการสร้าง JSON:\n";
+        prompt += "1. **กฎสำคัญเรื่องน้ำเสียง (Tone of Voice):** ผู้ป่วยมีความกังวลสูง (anxious) โปรดใช้ภาษาที่ **อ่อนโยน ให้กำลังใจ ชัดเจน และคลายความกังวล** (calm, reassuring, empathetic, and clear) หลีกเลี่ยงภาษาที่รุนแรงหรือทำให้ตกใจ\n";
+        prompt += "2. ใช้โครงสร้างหลัก: {\"pfe_text\": \"...\", \"treatment_plan\": {...}, \"relative_observation\": \"...\", \"red_flags\": \"...\"}\n";
+        prompt += "3. pfe_text: สร้างเอกสารให้ความรู้ (PFE) ใช้ Markdown สำหรับหัวข้อ (##) และรายการ (*)\n";
+        prompt += "4. treatment_plan: สร้างแผนการรักษา (goal, progress เป็น Integer 0-100, phases เป็น Array)\n";
+        prompt += "5. relative_observation: **สิ่งที่ญาติควรสังเกตและให้การสนับสนุน** ใช้รายการ (* หรือ -)\n";
+        prompt += "6. red_flags: **อาการหรือสถานการณ์ที่ควรมาพบแพทย์ทันที** ใช้รายการ (* หรือ -)\n\n";
+
+        // Patient Data
+        prompt += "### ข้อมูลผู้ป่วย (Patient Data) ###\n";
+        prompt += `ชื่อ-นามสกุล: ${patientData.demographic.name}\n`;
+        prompt += `โรคประจำตัว: ${patientData.demographic.underlying}\n`;
+
+        // Lab Data (CKD)
+        prompt += `--- ผลการตรวจทางห้องปฏิบัติการ (เพื่อใช้ในการวิเคราะห์ผลการรักษา) ---\n`;
+        const currentVisit = patientData.visits.find(v => v.isCurrent);
+        const labDate = patientData.labs.dates.d5; // MODIFIED: Use d5 for latest lab date
+        
+        prompt += `- วันที่ ${labDate} (Visit 5):\n`;
+        prompt += `  - eGFR (การทำงานของไต): ${patientData.labs.egfr.d5} mL/min (ไตระยะ 4)\n`; // MODIFIED: Use d5
+        prompt += `  - K+ (โพแทสเซียม): ${patientData.labs.k.d5} mEq/L (เป้าหมาย < 5.0)\n`; // MODIFIED: Use d5
+        prompt += `  - Phos (ฟอสฟอรัส): ${patientData.labs.phos.d5} mg/dL (เป้าหมาย < 4.5)\n`; // MODIFIED: Use d5
+        prompt += `  - Hb (ความเข้มข้นเลือด): ${patientData.labs.hb.d5} g/dL (เป้าหมาย 10-11.5)\n`; // MODIFIED: Use d5
+        prompt += `  - HbA1c (น้ำตาลสะสม): ${patientData.labs.a1c.d5} % (เป้าหมาย < 7.0)\n`; // MODIFIED: Use d5
+        
+        prompt += `- แนวโน้ม (Visit 1 -> 5):\n`;
+        prompt += `  - eGFR: ${patientData.labs.egfr.d1} -> ${patientData.labs.egfr.d5} (ลดลง - ต้องชะลอ)\n`; // MODIFIED: Use d5
+        prompt += `  - Phos: ${patientData.labs.phos.d1} -> ${patientData.labs.phos.d5} (สูงขึ้น - ต้องคุม)\n`; // MODIFIED: Use d5
+        prompt += `  - Hb: ${patientData.labs.hb.d1} -> ${patientData.labs.hb.d5} (ลดลง - ซีดลง)\n`; // MODIFIED: Use d5
+        
+        // Current Visit Data
+        prompt += `--- การรักษาครั้งล่าสุด (วันที่ ${currentVisit.date}) ---\n`;
+        prompt += `- อาการ/PI: ${currentVisit.ccPi}\n`;
+        prompt += `- วินิจฉัย: ${currentVisit.diag}\n`;
+        prompt += `- ผลการรักษาจากแพทย์ครั้งล่าสุด: ${currentVisit.treatmentOutcome}\n`; 
+        prompt += `- แผน/อื่นๆ (Plan): ${currentVisit.others}\n`;
+        prompt += `- ยาที่ได้รับ: ${currentVisit.med}\n`;
+
+        prompt += "\n\n**โปรดสร้าง JSON ตามโครงสร้างและกฎที่กำหนดเท่านั้น โดยเนื้อหา PFE ต้องเน้นการชะลอไตเสื่อม, การคุมอาหาร (เค็ม, โปรตีน, ฟอสฟอรัส) และการควบคุมความดันโลหิต และที่สำคัญที่สุด: ต้องใช้น้ำเสียงที่ให้กำลังใจและคลายความกังวลตามที่ระบุไว้ในกฎข้อ 1**";
+
+        return prompt;
+    }
+
+    /**
+     * Renders a block of content into editable HTML (ไม่เปลี่ยนแปลง)
+     */
+    function renderEditableContent(content) {
+        if (!content || !content.trim()) {
+            return `<p class="italic text-gray-500">N/A</p>`;
+        }
+        
+        let htmlContent = '';
+        let isInsideList = false;
+        
+        const contentLines = content.split('\n').map(line => line.trim()).filter(line => line);
+
+        contentLines.forEach(line => {
+            const isListItem = line.match(/^([*-•]|\d+\.)\s+/);
+            
+            if (isListItem) {
+                if (!isInsideList) {
+                    htmlContent += '<ul class="list-disc ml-4 space-y-1">';
+                    isInsideList = true;
+                }
+                const cleanItem = line.substring(isListItem[0].length).trim();
+                htmlContent += `<li><div contenteditable="true" class="inline-block">${cleanItem}</div></li>`;
+            } else {
+                if (isInsideList) {
+                    htmlContent += '</ul>';
+                    isInsideList = false;
+                }
+                htmlContent += `<p class="mb-1" contenteditable="true">${line}</p>`;
+            }
+        });
+
+        if (isInsideList) {
+            htmlContent += '</ul>';
+        }
+
+        return htmlContent;
+    }
+    
+    /**
+     * Generates a simple section card (ไม่เปลี่ยนแปลง)
+     */
+    function renderNewSection(title, content, bgColor, borderColor, titleColor) {
+        if (!content || !content.trim()) return '';
+
+        let htmlContent = renderEditableContent(content);
+
+        return `
+            <div class="pfe-section-card" style="background-color: ${bgColor}; border: 1px solid ${borderColor};">
+                <h3 class="text-xl font-bold mb-2" style="color: ${titleColor};" contenteditable="true">${title}</h3>
+                ${htmlContent}
+            </div>
+        `;
+    }
+
+    /**
+     * Generates the Self-Care table for PRE-DIALYSIS CKD (ไม่เปลี่ยนแปลง)
+     */
+    function generateSelfCareTable(lang) {
+        const T = getLocalizedText;
+        
+        const items = {
+            bp: { th: 'การควบคุมความดันโลหิต', en: 'Blood Pressure Control' },
+            bp_freq: { th: 'ทุกวัน', en: 'Daily' },
+            bp_action: { th: 'วัดความดันโลหิตที่บ้านทุกเช้า-เย็น, จดบันทึก, เป้าหมาย < 130/80 mmHg', en: 'Measure BP at home daily (AM/PM), keep log, Target < 130/80 mmHg' },
+            
+            diet: { th: 'การรับประทานอาหาร', en: 'Dietary Control' },
+            diet_freq: { th: 'ทุกมื้อ', en: 'Every meal' },
+            diet_action: { th: 'เลี่ยงอาหารเค็ม (โซเดียม < 2000mg), จำกัดโปรตีนตามระยะของโรค (ปรึกษานักโภชนาการ), เลี่ยงอาหารฟอสฟอรัส/โพแทสเซียมสูง (ถ้าแพทย์สั่ง)', en: 'Avoid salty food (Sodium < 2000mg), limit protein as per CKD stage (consult dietitian), avoid high Phos/K+ foods (if advised)' },
+            
+            med: { th: 'การรับประทานยา', en: 'Medication Adherence' },
+            med_freq: { th: 'ตามแพทย์สั่ง', en: 'As prescribed' },
+            med_action: { th: 'ทานยาตามแพทย์สั่งอย่างสม่ำเสมอ, โดยเฉพาะยาลดความดัน (ACEi/ARB), ยาปรับสมดุลเกลือแร่ (เช่น Bicarb)', en: 'Take medications regularly, especially BP meds (ACEi/ARB) and bicarbonate (if prescribed)' },
+            
+            sugar: { th: 'การควบคุมน้ำตาล (DM)', en: 'Blood Sugar Control (DM)' },
+            sugar_freq: { th: 'ทุกวัน / ตามนัด', en: 'Daily / As scheduled' },
+            sugar_action: { th: 'ควบคุมอาหารหวาน/แป้ง, ตรวจน้ำตาลปลายนิ้ว (ถ้ามีเครื่อง), เป้าหมาย A1c < 7.0%', en: 'Control sugar/carb intake, monitor blood sugar (if applicable), Target A1c < 7.0%' },
+
+            symptom: { th: 'การประเมินอาการ (Uremia)', en: 'Symptom Assessment (Uremia)' },
+            symptom_freq: { th: 'ทุกวัน', en: 'Daily' },
+            symptom_action: { th: 'สังเกตอาการบวม, เหนื่อยหอบ (อาการของเสียคั่ง/น้ำเกิน), อาการคัน, เบื่ออาหาร, คลื่นไส้', en: 'Monitor for swelling, shortness of breath (uremia/fluid), itching, loss of appetite, nausea' }
+        };
+
+        return `
+            <h3 class="text-xl font-bold text-teal-700 mb-2 mt-8 border-b pb-1">${T('self_care_title', lang)}</h3>
+            <table class="general-table">
+                <thead>
+                    <tr>
+                        <th class="w-1/3">${T('self_care_item', lang)}</th>
+                        <th class="w-1/3">${T('self_care_freq', lang)}</th>
+                        <th class="w-1/3">${T('self_care_action', lang)}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td contenteditable="true">${items.bp[lang] || items.bp.en}</td>
+                        <td contenteditable="true">${items.bp_freq[lang] || items.bp_freq.en}</td>
+                        <td contenteditable="true">${items.bp_action[lang] || items.bp_action.en}</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">${items.diet[lang] || items.diet.en}</td>
+                        <td contenteditable="true">${items.diet_freq[lang] || items.diet_freq.en}</td>
+                        <td contenteditable="true">${items.diet_action[lang] || items.diet_action.en}</td>
+                    </tr>
+                     <tr>
+                        <td contenteditable="true">${items.med[lang] || items.med.en}</td>
+                        <td contenteditable="true">${items.med_freq[lang] || items.med_freq.en}</td>
+                        <td contenteditable="true">${items.med_action[lang] || items.med_action.en}</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">${items.sugar[lang] || items.sugar.en}</td>
+                        <td contenteditable="true">${items.sugar_freq[lang] || items.sugar_freq.en}</td>
+                        <td contenteditable="true">${items.sugar_action[lang] || items.sugar_action.en}</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">${items.symptom[lang] || items.symptom.en}</td>
+                        <td contenteditable="true">${items.symptom_freq[lang] || items.symptom_freq.en}</td>
+                        <td contenteditable="true">${items.symptom_action[lang] || items.symptom_action.en}</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+    }
+
+    /**
+     * Generates the Medication Table.
+     * (No major changes, only variable names used in the loop)
+     */
+    function generateMedicationTable(patientData) {
+        const lang = patientData.demographic.language;
+        const T = getLocalizedText;
+
+        const currentVisit = patientData.visits.find(v => v.isCurrent);
+        const medText = currentVisit.med || '';
+
+        const MEAL_KEYS = ['morning', 'noon', 'evening', 'bedtime'];
+        const MEAL_TIMES_MAP = {
+            'เช้า': 'morning',
+            'กลางวัน': 'noon',
+            'เย็น': 'evening',
+            'ก่อนนอน': 'bedtime'
+        };
+
+        const meals = {};
+        MEAL_KEYS.forEach(key => {
+            meals[key] = { 
+                before: T('med_none', lang), 
+                after: T('med_none', lang), 
+                icon: key === 'morning' ? '☀️' : key === 'noon' ? '😊' : key === 'evening' ? '🌙' : '😴',
+                label: T(`meal_${key}`, lang) 
+            };
+        });
+        
+        let prnMed = T('med_none', lang);
+        const lines = medText.split('\n').map(line => line.trim()).filter(line => line);
+
+        lines.forEach(line => {
+            const parts = line.split(':');
+            if (parts.length < 2) {
+                if (line.toUpperCase().includes('PRN')) {
+                    prnMed = line.replace(/ยา\s*PRN\s*:\s*|PRN\s*:/i, '').trim() || (lang === 'en' ? 'Specify PRN drug' : T('med_none', lang));
+                }
+                return;
+            }
+
+            const mealTimeInput = parts[0].trim(); 
+            const meds = parts[1].trim();
+            const mealKey = MEAL_TIMES_MAP[mealTimeInput]; 
+
+            if (mealKey && meals[mealKey]) { 
+                const beforeMatch = meds.match(/(.*?)\s*\((ก่อนอาหาร|before meal)\)(.*)/i);
+                let afterMeds = meds;
+                
+                if (beforeMatch) {
+                    meals[mealKey].before = beforeMatch[1].trim(); 
+                    afterMeds = (beforeMatch[3] || '').replace(/^,|,$/g, '').trim(); 
+                } else {
+                    afterMeds = meds;
+                }
+
+                if(afterMeds) {
+                    meals[mealKey].after = afterMeds; 
+                }
+            }
+        });
+        
+        let tableHtml = `
+            <div class="mt-8">
+                <h3 class="text-xl font-bold text-blue-700 mb-2 mt-8 border-b pb-1">${T('med_table_title', lang)}</h3>
+                <table class="general-table medication-table">
+                    <thead>
+                        <tr>
+                            <th class="w-1/6">${T('med_meal', lang)}</th>
+                            <th class="w-5/12">${T('med_before', lang)}</th>
+                            <th class="w-5/12">${T('med_after', lang)}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        for (const [key, data] of Object.entries(meals)) {
+            tableHtml += `
+                <tr>
+                    <td contenteditable="true" class="font-bold whitespace-nowrap">${data.icon} ${data.label}</td>
+                    <td contenteditable="true" class="${data.before === T('med_none', lang) ? 'text-gray-500 italic' : ''}">${data.before.replace(/,\s*$/, '')}</td>
+                    <td contenteditable="true" class="${data.after === T('med_none', lang) ? 'text-gray-500 italic' : ''}">${data.after.replace(/,\s*$/, '')}</td>
+                </tr>
+            `;
+        }
+        
+        tableHtml += `
+                    </tbody>
+                </table>
+                <div class="mt-4 border-t pt-2">
+                    <h4 class="font-bold text-base text-gray-700">${T('med_prn', lang)}</h4>
+                    <p contenteditable="true" class="ml-2 text-red-700 font-medium">* ${prnMed}</p>
+                </div>
+            </div>
+        `;
+        return tableHtml;
+    }
+
+    /**
+     * Converts markdown text to a structured HTML format (ไม่เปลี่ยนแปลง)
+     */
+    function markdownToHtml(mdText) {
+        if (!mdText) return '<p>No AI recommendations found.</p>';
+        
+        let finalHtml = '';
+        let currentSectionTitle = '';
+        let currentSectionContent = '';
+        const lines = mdText.split('\n');
+
+        const renderSection = (title, content) => {
+            if (!title || !content.trim()) return '';
+
+            let htmlContent = renderEditableContent(content); 
+
+            return `
+                <div class="pfe-section-card">
+                    <h3 class="text-lg font-semibold text-teal-800 mb-2" contenteditable="true">${title}</h3>
+                    ${htmlContent}
+                </div>
+            `;
+        };
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith('##')) {
+                if (currentSectionTitle) {
+                    finalHtml += renderSection(currentSectionTitle, currentSectionContent);
+                }
+                currentSectionTitle = line.replace('##', '').trim();
+                currentSectionContent = '';
+            } else {
+                currentSectionContent += line + '\n';
+            }
+        });
+        
+        if (currentSectionTitle) {
+            finalHtml += renderSection(currentSectionTitle, currentSectionContent);
+        }
+        
+        return finalHtml || '<p>No AI recommendations found.</p>';
+    }
+    
+    /**
+     * Generates the structured Plan/Goal section (ไม่เปลี่ยนแปลง)
+     */
+    function generateTreatmentPlanHtml(planData, lang) {
+        const T = getLocalizedText;
+        if (!planData || !planData.goal || !planData.phases || planData.phases.length === 0) {
+            return `<p class="text-red-500 font-medium mt-4">${lang === 'en' ? 'Could not generate Treatment Plan and Goals (data incomplete).' : 'ไม่สามารถสร้างส่วน **แผนการรักษาและเป้าหมาย** ได้ (ข้อมูลไม่ครบถ้วน)'}</p>`;
+        }
+        
+        const progress = Math.min(100, Math.max(0, parseInt(planData.progress) || 0));
+        
+        let phasesHtml = planData.phases.map((phase, index) => `
+            <div class="plan-phase-card text-xs">
+                <div class="plan-phase-title" contenteditable="true">${phase.time || `${T('plan_phase_default', lang)} ${index + 1}`}</div>
+                <div contenteditable="true" class="text-gray-700">${phase.description || T('plan_desc_default', lang)}</div>
+            </div>
+        `).join('');
+        
+        const totalPhases = 4;
+        const currentPhases = planData.phases.length;
+        
+        for (let i = currentPhases; i < totalPhases; i++) {
+            phasesHtml += `
+            <div class="plan-phase-card text-xs bg-gray-50 border-gray-300">
+                <div class="plan-phase-title text-gray-500" contenteditable="true">Phase ${i + 1} (${T('plan_phase_default', lang)})</div>
+                <div contenteditable="true" class="text-gray-400">${T('plan_desc_default', lang)}</div>
+            </div>`;
+        }
+
+
+        return `
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-blue-600 mb-4 border-b pb-2">${T('plan_goal_header', lang)}</h3>
+                <div class="plan-header-card">
+                    <div class="plan-goal mb-2">${T('plan_goal_label', lang)} <span contenteditable="true" class="font-normal text-gray-800">${planData.goal}</span></div>
+                    <div class="text-sm text-gray-600">${T('plan_progress_label', lang)}</div>
+                    
+                    <div class="plan-progress">
+                        <div class="plan-progress-bar" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="text-right text-xs font-semibold text-blue-700">${T('plan_progress_achieved', lang)} ${progress}%</div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        ${phasesHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Generates the Visit Summary table from raw input data
+     * MODIFIED: To include 5 columns (Visits 5, 4, 3, 2, 1)
+     */
+    function generateRawVisitSummaryTable(patientData) {
+        const lang = patientData.demographic.language;
+        const T = getLocalizedText;
+
+        let tableHtml = `
+            <table class="summary-table">
+                <thead>
+                    <tr id="visit-history-table">
+                        <th>${T('raw_table_title', lang)}</th>
+                        <th class="bg-blue-600 text-white">${T('raw_table_visit5', lang)} ${patientData.visits[0].date})</th>
+                        <th>${T('raw_table_visit4', lang)} ${patientData.visits[1].date})</th>
+                        <th>${T('raw_table_visit3', lang)} ${patientData.visits[2].date})</th>
+                        <th>${T('raw_table_visit2', lang)} ${patientData.visits[3].date})</th>
+                        <th>${T('raw_table_visit1', lang)} ${patientData.visits[4].date})</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        const fields = [
+            { key: 'ccPi', labelKey: 'raw_cc' },
+            { key: 'pe', labelKey: 'raw_pe' },
+            { key: 'diag', labelKey: 'raw_diag' },
+            { key: 'med', labelKey: 'raw_med' },
+            { key: 'labXray', labelKey: 'raw_lab' },
+            { key: 'treatmentOutcome', labelKey: 'raw_outcome' }, 
+            { key: 'others', labelKey: 'raw_plan' },
+        ];
+
+        fields.forEach(field => {
+            tableHtml += `
+                <tr>
+                    <th class="bg-gray-100">${T(field.labelKey, lang)}</th>
+                    <td contenteditable="true" class="text-blue-900 font-medium">${patientData.visits[0][field.key] || '-'}</td>
+                    <td contenteditable="true">${patientData.visits[1][field.key] || '-'}</td>
+                    <td contenteditable="true">${patientData.visits[2][field.key] || '-'}</td>
+                    <td contenteditable="true">${patientData.visits[3][field.key] || '-'}</td>
+                    <td contenteditable="true">${patientData.visits[4][field.key] || '-'}</td>
+                </tr>
+            `;
+        });
+
+        tableHtml += `</tbody></table>`;
+        return tableHtml;
+    }
+
+
+    /**
+     * Main function to handle form submission (ไม่เปลี่ยนแปลง)
+     */
+    async function generateDocuments(event) {
+        event.preventDefault();
+        
+        generateBtn.disabled = true;
+        loadingSpinner.classList.remove('hidden');
+        outputSection.classList.add('hidden');
+        
+        const patientData = serializeFormData(event.target);
+        const lang = patientData.demographic.language;
+        const T = getLocalizedText;
+
+        const loadingText = lang === 'en' 
+            ? 'Generating document... Please wait for a few seconds.' 
+            : 'กำลังสร้างเอกสารโดย AI... กรุณารอสักครู่';
+            
+        summaryContent.innerHTML = `<p class="text-center text-blue-500">${loadingText}</p>`;
+        pfeContent.innerHTML = `<p class="text-center text-blue-500">${loadingText}</p>`;
+
+
+        // 1. Generate Raw Visit Summary
+        summaryContent.innerHTML = generateRawVisitSummaryTable(patientData);
+        
+        // 2. Create Prompt (with reassuring tone rule)
+        const prompt = createPFEPrompt(patientData);
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: {
+                parts: [{ text: `You are a professional medical assistant. Provide the response ONLY in JSON format, strictly following the specified schema. The output must be in ${lang === 'en' ? 'English' : (lang === 'ar' ? 'Arabic' : (lang === 'zh' ? 'Chinese' : (lang === 'ja' ? 'Japanese' : 'Thai')))}.` }]
+            },
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        "pfe_text": { "type": "STRING" },
+                        "treatment_plan": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "goal": { "type": "STRING" },
+                                "progress": { "type": "INTEGER" },
+                                "phases": { 
+                                    "type": "ARRAY", 
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "time": { "type": "STRING" },
+                                            "description": { "type": "STRING" }
+                                        },
+                                        "required": ["time", "description"]
+                                    },
+                                }
+                            },
+                            "required": ["goal", "progress", "phases"]
+                        },
+                        "relative_observation": { "type": "STRING" }, 
+                        "red_flags": { "type": "STRING" } 
+                    },
+                    "required": ["pfe_text", "treatment_plan", "relative_observation", "red_flags"]
+                }
+            }
+        };
+
+
+        try {
+            pfeContent.innerHTML = `<p class="text-center text-blue-500">${loadingText}</p>`; 
+
+            const response = await fetchWithRetry(GEMINI_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            console.log("Raw Gemini API Result (for debugging):", result);
+
+            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!jsonText) {
+                if (result.error) {
+                    throw new Error(`API Error: ${result.error.message || 'Unknown error'}`);
+                }
+                throw new Error("API did not return structured text content (candidates is empty or safe filtered).");
+            }
+            
+            let rawJsonString = jsonText.trim();
+            const cleanedJsonString = rawJsonString.replace(/^```json\s*|```\s*$/g, '').trim();
+            const firstBrace = cleanedJsonString.indexOf('{');
+            const lastBrace = cleanedJsonString.lastIndexOf('}');
+            
+            if (firstBrace === -1 || lastBrace === -1 || firstBrace >= lastBrace) {
+                console.error("Failed to find valid JSON braces after cleaning:", cleanedJsonString);
+                throw new Error("AI output structure is invalid (Missing { or }). Raw text snippet: " + cleanedJsonString.substring(0, 200) + '...');
+            }
+            
+            const finalJsonString = cleanedJsonString.substring(firstBrace, lastBrace + 1);
+            const aiResponse = JSON.parse(finalJsonString);
+            
+            // 3. Document Generation
+            let finalPFEHtml = '';
+
+            // 3.1 Generate Treatment Plan (Calming Blue)
+            if (aiResponse.treatment_plan) {
+                finalPFEHtml += generateTreatmentPlanHtml(aiResponse.treatment_plan, lang);
+            } else {
+                 finalPFEHtml += `<p class="text-red-500 font-medium">${T('plan_goal_header', lang) === 'Treatment Plan and Goals' ? 'AI could not generate the Treatment Plan and Goals section.' : 'AI ไม่สามารถสร้างส่วนของ **แผนการรักษาและเป้าหมาย** ได้'}</p>`;
+            }
+
+            // 3.2 Generate Relative Observation (Supportive Green)
+            finalPFEHtml += renderNewSection(
+                T('ai_doc_desc', lang), 
+                aiResponse.relative_observation, 
+                '#f0fdf4', // Green-50
+                '#bbf7d0', // Green-200
+                '#15803d'  // Green-700
+            );
+
+            // 3.3 Generate Red Flags (Warning Amber)
+            finalPFEHtml += renderNewSection(
+                T('red_flags_desc', lang), 
+                aiResponse.red_flags, 
+                '#fffbeb', // Amber-50
+                '#fcd34d', // Amber-300
+                '#b45309'  // Amber-700
+            );
+
+            // 3.4 Generate Medication Table (Bug Fixed)
+            finalPFEHtml += generateMedicationTable(patientData);
+
+            // 3.5 Generate PFE Content (Markdown)
+            finalPFEHtml += markdownToHtml(aiResponse.pfe_text);
+
+            // 3.6 Add fixed PRE-DIALYSIS CKD Self-Care table
+            finalPFEHtml += generateSelfCareTable(lang);
+            
+            pfeContent.innerHTML = finalPFEHtml;
+
+            outputSection.classList.remove('hidden');
+
+        } catch (error) {
+            console.error("Error generating AI documents (PFE):", error);
+            const errorMessage = `<p class="text-red-600 font-bold p-4 bg-red-50 rounded">${T('raw_table_title', lang) === 'Item' ? 'AI Error: ' : 'เกิดข้อผิดพลาดในการเรียกใช้ AI (PFE Error): '} ${error.message}</p><p class="mt-2 text-sm text-gray-500">โปรดตรวจสอบข้อความแจ้งเตือนที่ชัดเจนใน **Console ของเบราว์เซอร์ (F12)** เพื่อวินิจฉัยปัญหา API หรือ JSON Parsing</p>`;
+            
+            pfeContent.innerHTML = errorMessage + generateSelfCareTable(lang); 
+            outputSection.classList.remove('hidden');
+        } finally {
+            generateBtn.disabled = false;
+            loadingSpinner.classList.add('hidden');
+            outputSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+    
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        syncDates(); 
+        updateUIText(documentLanguageSelect.value); 
+        
+        document.querySelectorAll('.lab-date-input').forEach(input => {
+            input.addEventListener('change', syncDates);
+        });
+        
+        documentLanguageSelect.addEventListener('change', (event) => {
+            updateUIText(event.target.value);
+        });
+    });
+    patientForm.addEventListener('submit', generateDocuments);
+    printBtn.addEventListener('click', () => window.print());
+
+</script>
+
+</body>
+</html>
