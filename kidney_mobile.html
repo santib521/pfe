@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบ HIS: สรุป Infographic โรคไต (4 Tabs Dashboard)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles & Typography */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f4f8; /* Soft blue-gray background */
+            color: #1f2937;
+        }
+        .container-content {
+            max-width: 600px;
+            margin: auto;
+            padding: 0;
+        }
+        /* Hidden input form for clean display */
+        #input-form {
+            background-color: #fff;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Modern Mobile Output Styles (New & Improved) --- */
+        .mobile-card {
+            background-color: #ffffff;
+            border-radius: 20px; /* More rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04); /* Deeper, cleaner shadow */
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Tab Navigation Styles */
+        .tab-button {
+            padding: 0.75rem 0.5rem;
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            color: #6b7280;
+            font-size: 0.85rem; /* Slightly smaller font for 4 tabs */
+        }
+        .tab-button.active {
+            color: #06b6d4; /* Cyan */
+            border-bottom-color: #06b6d4;
+            background-color: #f0faff; /* Light Blue BG */
+        }
+        .tab-content {
+            padding-top: 1rem;
+            display: none; /* Controlled by JavaScript */
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Trend Card Styles */
+        .trend-card {
+            padding: 1rem 0.5rem; 
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .trend-value {
+            font-size: 2.0rem;
+            font-weight: 800; 
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        .trend-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        /* Specific Trend Card Colors */
+        .trend-neutral { background-color: #f3f4f6; border-color: #d1d5db; }
+        .trend-good { background-color: #ecfdf5; border-color: #10b981; } /* Emerald Green */
+        .trend-bad { background-color: #fff1f2; border-color: #f43f5e; } /* Rose Red */
+
+        /* Red Flag Card */
+        .red-flag-card {
+             background-color: #fef2f2; 
+             border: 2px solid #ef4444; 
+             color: #991b1b;
+             border-radius: 16px;
+        }
+        
+        /* Info Tip Card (For PFE/Advice) */
+        .info-tip-card {
+            background-color: #ffffff; 
+            border: 1px solid #e0f2fe; 
+            border-left: 8px solid #38bdf8; /* Sky Blue for Advice */
+            padding: 1rem;
+            border-radius: 12px;
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .info-tip-card i {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+            color: #0ea5e9; /* Sky Blue Icon */
+        }
+        
+        /* Medication Card Overrides */
+        .med-morning { border-left-color: #fcd34d; background-color: #fffbeb; } /* Amber */
+        .med-day { border-left-color: #34d399; background-color: #ecfdf5; } /* Emerald */
+        .med-evening { border-left-color: #60a5fa; background-color: #eff6ff; } /* Blue */
+        .med-bed { border-left-color: #a78bfa; background-color: #f5f3ff; } /* Violet */
+        .med-prn { border-left-color: #f97316; background-color: #fff7ed; } /* Orange for PRN */
+        
+        /* New Header Style (Minimalist) */
+        .modern-header {
+            background-color: #ffffff; 
+            border-bottom: 4px solid #06b6d4; /* Cyan accent line */
+            color: #1f2937;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Plan Phase Card (Used in Summary Tab) */
+        .plan-phase-card-mobile {
+            background-color: #eff6ff; 
+            border: 1px solid #93c5fd; 
+            padding: 0.75rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Remove contenteditable focus style */
+        [contenteditable]:hover, [contenteditable]:focus {
+            outline: none !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<div id="app" class="container-content">
+
+    <h1 class="text-xl font-bold text-center py-4 modern-header sticky top-0 z-10">
+        <i class="fas fa-gauge-high mr-2 text-cyan-500"></i> Dashboard สรุปผลการดูแลโรคไต
+    </h1>
+    
+    <div class="px-4 py-2 bg-yellow-50 border-b border-yellow-300 text-sm text-center no-print" role="alert">
+      <strong class="font-semibold">โปรดทราบ:</strong> หน้านี้เน้น **การแสดงผลลัพธ์บนมือถือ** ข้อมูลดิบสำหรับการป้อนถูกซ่อนไว้
+       <button id="toggle-input-btn" class="text-blue-600 hover:text-blue-800 font-medium ml-2 text-xs">แสดง/ซ่อน Input</button>
+    </div>
+
+    <div id="input-form-wrapper" class="hidden">
+        <div id="input-form" class="mb-4">
+            <form id="patient-form" class="space-y-4">
+                 <div class="border-b pb-4">
+                    <h2 class="text-lg font-bold text-cyan-600">ข้อมูลพื้นฐาน (Mock Data)</h2>
+                    <div class="grid grid-cols-1 gap-2 text-sm">
+                         <div class="input-group"><label for="name" class="font-medium">ชื่อ-HN:</label><input type="text" id="name" name="name" class="w-full text-xs" value="นางสดใส ห่วงใย (HN: 66789)" required></div>
+                         <div class="input-group"><label for="underlying" class="font-medium">โรคประจำตัว:</label><input type="text" id="underlying" name="underlying" class="w-full text-xs" value="CKD Stage 4 (eGFR 25), DM type 2, HPN, DLP"></div>
+                         <div class="input-group hidden"><label for="documentLanguage">ภาษา</label><select id="documentLanguage" name="documentLanguage" class="w-full"><option value="th" selected>ไทย</option></select></div>
+                    </div>
+                </div>
+
+                <h2 class="text-lg font-bold text-cyan-600">การรักษา 5 ครั้งล่าสุด (Mock)</h2>
+                <div id="visit-5" class="bg-blue-50 border-cyan-300 border p-3 rounded-lg">
+                    <h3 class="font-bold text-cyan-700">ครั้งล่าสุด (Visit 5)</h3>
+                    <textarea name="ccPi_5" rows="1" class="w-full text-xs mt-1" placeholder="CC/PI">ติดตามอาการ. ยังเพลีย. มีบวมที่ขา 2 ข้าง. เริ่มคัน (pruritus). เบื่ออาหาร.</textarea>
+                    
+                    <textarea name="med_5" rows="4" class="w-full text-xs mt-1" placeholder="ยาที่ได้รับ">เช้า (หลังอาหาร): Amlodipine 10 mg, Losartan 50 mg, Folic acid 5 mg
+เช้า (ก่อนอาหาร): Sodium Bicarbonate 1 tab
+กลางวัน (ก่อนอาหาร): Sodium Bicarbonate 1 tab
+เย็น (ก่อนอาหาร): Sodium Bicarbonate 1 tab
+ก่อนนอน: Atorvastatin 10 mg
+ยา PRN: Loratadine 10 mg (แก้คัน)</textarea>
+                    
+                    <textarea name="others_5" rows="1" class="w-full text-xs mt-1" placeholder="Plan/Others">เน้นย้ำการคุมอาหาร (โปรตีน, เกลือ, ฟอสฟอรัส). เริ่มให้ข้อมูลเรื่องการบำบัดทดแทนไต (RRT options - HD/PD/Transplant).</textarea>
+                     <input type="date" id="visitDate_5_input" name="visitDate_5" class="hidden" value="2026-06-15">
+                     <input type="date" id="visitDate_4_input" name="visitDate_4" class="hidden" value="2026-03-15">
+                     <input type="date" id="visitDate_3_input" name="visitDate_3" class="hidden" value="2025-12-15">
+                     <input type="date" id="visitDate_2_input" name="visitDate_2" class="hidden" value="2025-09-15">
+                     <input type="date" id="visitDate_1_input" name="visitDate_1" class="hidden" value="2025-06-15">
+                     <textarea name="diag_5" class="hidden">CKD Stage 4 (approaching Stage 5), eGFR 25. Uremic symptoms (pruritus, fatigue). Anemia.</textarea>
+                     <textarea name="pe_5" class="hidden">BP: 140/85 mmHg. Pitting edema 1+ at ankles. Pale.</textarea>
+                     <textarea name="treatmentOutcome_5" class="hidden">eGFR ลดลงต่อเนื่อง. มีอาการของ Uremia. Hb/Phos เริ่มมีปัญหา. ควบคุม BP/A1c พอใช้.</textarea>
+                     <textarea name="labXray_5" class="hidden">Lab: eGFR 25, Cr 2.8, K+ 4.9, Phos 4.8 (เริ่มสูง), Hb 10.0, A1c 7.2%. (ตามตาราง Lab)</textarea>
+                </div>
+                <textarea name="ccPi_4" class="hidden">มาตามนัด. รู้สึกเหนื่อยง่ายขึ้นเล็กน้อย (fatigue). เบื่ออาหาร.</textarea><textarea name="diag_4" class="hidden">CKD Stage 4 (eGFR 28), uncontrolled HPN, Anemia of CKD.</textarea><textarea name="med_4" class="hidden">เพิ่ม Amlodipine 10 mg. หยุด Metformin. เริ่ม Folic acid. เริ่ม Sodium Bicarbonate (Bicarb) 1 tab TID.</textarea><textarea name="treatmentOutcome_4" class="hidden">ไตเสื่อมลง (eGFR 28). ความดันสูง. เริ่มมีภาวะซีด.</textarea><textarea name="others_4" class="hidden">ปรับเพิ่มยาลดความดัน. เน้นย้ำการคุมเกลือเข้มงวด.</textarea><textarea name="labXray_4" class="hidden">Lab: eGFR 28, Cr 2.5, K+ 4.8, Hb 10.5 (ซีดลง), A1c 7.8%.</textarea><textarea name="pe_4" class="hidden">BP: 145/90 mmHg. Trace pitting edema (+). Pale conjunctiva.</textarea>
+                 <textarea name="ccPi_3" class="hidden">มาตามนัด. ไม่มีอาการผิดปกติ</textarea><textarea name="diag_3" class="hidden">CKD Stage 3b (eGFR 30), DM, HPN.</textarea><textarea name="med_3" class="hidden">Amlodipine 5 mg, Losartan 50 mg, Metformin 500 mg, Atorvastatin 10 mg.</textarea><textarea name="treatmentOutcome_3" class="hidden">ควบคุมความดันและน้ำตาลดี. eGFR คงที่จาก 3 เดือนก่อน.</textarea><textarea name="others_3" class="hidden">เน้นย้ำการคุมอาหารเค็ม/หวาน. นัดติดตาม 3 เดือน.</textarea><textarea name="labXray_3" class="hidden">Lab: eGFR 30, Cr 2.2, K+ 4.6, Hb 12.0, A1c 7.3%.</textarea><textarea name="pe_3" class="hidden">BP: 130/80 mmHg. No edema.</textarea>
+                 <textarea name="ccPi_2" class="hidden">มาตามนัด. ไม่มีอาการผิดปกติ</textarea><textarea name="diag_2" class="hidden">CKD Stage 3b (eGFR 35), DM, HPN.</textarea><textarea name="med_2" class="hidden">Amlodipine 5 mg, Losartan 50 mg, Metformin 500 mg, Atorvastatin 10 mg.</textarea><textarea name="treatmentOutcome_2" class="hidden">ควบคุมความดันและน้ำตาลพอใช้. eGFR ลดลงจาก 6 เดือนก่อน.</textarea><textarea name="others_2" class="hidden">แนะนำคุมอาหารเค็ม/หวานเข้มงวด. นัดติดตาม 3 เดือน.</textarea><textarea name="labXray_2" class="hidden">Lab: eGFR 35, Cr 2.0, K+ 4.4, Hb 12.5, A1c 7.5%.</textarea><textarea name="pe_2" class="hidden">BP: 135/85 mmHg. No edema.</textarea>
+                 <textarea name="ccPi_1" class="hidden">มาตามนัดติดตามโรคไต, เบาหวาน, ความดัน. ไม่มีอาการบวม. ปกติดี.</textarea><textarea name="diag_1" class="hidden">CKD Stage 3b (eGFR 40), DM, HPN.</textarea><textarea name="med_1" class="hidden">Amlodipine 5 mg, Losartan 50 mg, Metformin 500 mg, Atorvastatin 10 mg.</textarea><textarea name="treatmentOutcome_1" class="hidden">ควบคุมความดันและน้ำตาลพอใช้. eGFR คงที่จาก 6 เดือนก่อน.</textarea><textarea name="others_1" class="hidden">แนะนำคุมอาหารเค็ม/หวาน. นัดติดตาม 3 เดือน (เนื่องจาก eGFR < 45).</textarea><textarea name="labXray_1" class="hidden">Lab: eGFR 40, Cr 1.8, K+ 4.5, Hb 12.0, A1c 7.5%.</textarea><textarea name="pe_1" class="hidden">BP: 135/85 mmHg. No edema. Lungs clear.</textarea>
+
+                <div class="border-b pb-4">
+                    <h2 class="text-lg font-bold text-cyan-600">ผล Lab 5 ครั้ง (Mock Data)</h2>
+                    <div class="text-xs">
+                        <input type="date" id="lab_date_1" name="lab_date_1" class="hidden" value="2025-06-15">
+                        <input type="date" id="lab_date_2" name="lab_date_2" class="hidden" value="2025-09-15">
+                        <input type="date" id="lab_date_3" name="lab_date_3" class="hidden" value="2025-12-15">
+                        <input type="date" id="lab_date_4" name="lab_date_4" class="hidden" value="2026-03-15">
+                        <input type="date" id="lab_date_5" name="lab_date_5" class="hidden" value="2026-06-15">
+                        
+                        <input type="text" name="lab_egfr_d1" class="hidden" value="40"><input type="text" name="lab_egfr_d2" class="hidden" value="35"><input type="text" name="lab_egfr_d3" class="hidden" value="30"><input type="text" name="lab_egfr_d4" class="hidden" value="28"><input type="text" name="lab_egfr_d5" class="hidden" value="25">
+                        <input type="text" name="lab_k_d1" class="hidden" value="4.5"><input type="text" name="lab_k_d2" class="hidden" value="4.4"><input type="text" name="lab_k_d3" class="hidden" value="4.6"><input type="text" name="lab_k_d4" class="hidden" value="4.8"><input type="text" name="lab_k_d5" class="hidden" value="4.9">
+                        <input type="text" name="lab_phos_d1" class="hidden" value="4.0"><input type="text" name="lab_phos_d2" class="hidden" value="4.2"><input type="text" name="lab_phos_d3" class="hidden" value="4.5"><input type="text" name="lab_phos_d4" class="hidden" value="4.6"><input type="text" name="lab_phos_d5" class="hidden" value="4.8">
+                        <input type="text" name="lab_hb_d1" class="hidden" value="12.0"><input type="text" name="lab_hb_d2" class="hidden" value="12.5"><input type="text" name="lab_hb_d3" class="hidden" value="12.0"><input type="text" name="lab_hb_d4" class="hidden" value="10.5"><input type="text" name="lab_hb_d5" class="hidden" value="10.0">
+                        <input type="text" name="lab_a1c_d1" class="hidden" value="7.5%"><input type="text" name="lab_a1c_d2" class="hidden" value="7.5%"><input type="text" name="lab_a1c_d3" class="hidden" value="7.3%"><input type="text" name="lab_a1c_d4" class="hidden" value="7.8%"><input type="text" name="lab_a1c_d5" class="hidden" value="7.2%">
+                        <input type="text" name="lab_creatinine_d1" class="hidden" value="1.8"><input type="text" name="lab_creatinine_d2" class="hidden" value="2.0"><input type="text" name="lab_creatinine_d3" class="hidden" value="2.2"><input type="text" name="lab_creatinine_d4" class="hidden" value="2.5"><input type="text" name="lab_creatinine_d5" class="hidden" value="2.8">
+                        <input type="text" name="lab_bun_d1" class="hidden" value="30"><input type="text" name="lab_bun_d2" class="hidden" value="35"><input type="text" name="lab_bun_d3" class="hidden" value="40"><input type="text" name="lab_bun_d4" class="hidden" value="45"><input type="text" name="lab_bun_d5" class="hidden" value="55">
+                        <input type="text" name="lab_albumin_d1" class="hidden" value="4.0"><input type="text" name="lab_albumin_d2" class="hidden" value="4.0"><input type="text" name="lab_albumin_d3" class="hidden" value="3.9"><input type="text" name="lab_albumin_d4" class="hidden" value="3.8"><input type="text" name="lab_albumin_d5" class="hidden" value="3.7">
+                        <textarea id="pastHistory" name="pastHistory" class="hidden">ผ่าตัดต้อกระจก (Cataract surgery) 5 ปีก่อน</textarea>
+                        <textarea id="allergy" name="allergy" class="hidden">Penicillin (ผื่น)</textarea>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mt-4">
+                    <button type="submit" id="generate-btn" class="w-full py-2 px-6 rounded-full shadow-lg text-sm font-medium text-white bg-teal-600 hover:bg-teal-700">
+                        <i id="loading-spinner" class="fas fa-sync fa-spin hidden mr-2"></i>
+                        สร้างสรุป Mobile Infographic
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="output-section" class="px-4 py-4">
+        
+        <div id="patient-info-card" class="mobile-card bg-white border-t-8 border-cyan-500 shadow-xl">
+            <h2 class="text-xl font-bold text-cyan-800 mb-1">สวัสดีครับ คุณ<span id="patient-name-display">นางสดใส ห่วงใย</span></h2>
+            <p class="text-sm text-gray-600">สถานะล่าสุด (วันที่ <span id="latest-date-display">2026-06-15</span>)</p>
+            <div class="mt-3 p-3 bg-gray-50 rounded-xl border-l-4 border-rose-500 shadow-inner">
+                <p class="font-medium text-gray-700">โรคประจำตัว:</p>
+                <p class="text-sm text-rose-600 font-semibold" id="patient-underlying-display">CKD Stage 4 (eGFR 25), DM type 2, HPN, DLP</p>
+            </div>
+        </div>
+        
+        <div class="flex bg-white rounded-t-xl overflow-hidden shadow-md mt-4 sticky top-[72px] z-10" id="tab-nav">
+            <button class="tab-button active" data-tab="summary">
+                <i class="fas fa-chart-line mr-1"></i> สรุปผล
+            </button>
+            <button class="tab-button" data-tab="medication">
+                <i class="fas fa-pills mr-1"></i> ตารางยา
+            </button>
+            <button class="tab-button" data-tab="nutrition">
+                <i class="fas fa-apple-alt mr-1"></i> โภชนาการ
+            </button>
+            <button class="tab-button" data-tab="advice">
+                <i class="fas fa-hands-helping mr-1"></i> คำแนะนำ
+            </button>
+        </div>
+
+        <div id="tab-content-container" class="mobile-card !mt-0 !mb-0 !rounded-t-none">
+            
+            <div id="content-summary" class="tab-content active">
+                <h3 class="text-lg font-bold text-gray-700 mb-4"><i class="fas fa-chart-line mr-2 text-cyan-500"></i> แนวโน้มการทำงานของไต (5 ครั้งล่าสุด)</h3>
+                <div id="lab-trend-cards" class="grid grid-cols-3 gap-3">
+                    <p class="text-sm col-span-3 text-center text-gray-400">กำลังประมวลผล Lab...</p>
+                </div>
+                
+                <h3 class="text-lg font-bold text-gray-700 mb-2 mt-6"><i class="fas fa-bullseye mr-2 text-cyan-500"></i> แผนและเป้าหมายการรักษา</h3>
+                <div id="pfe-goal-mobile" class="bg-white border-indigo-500">
+                    <p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์แผนการรักษา...</p>
+                </div>
+            </div>
+
+            <div id="content-medication" class="tab-content">
+                <h3 class="text-lg font-bold text-gray-700 mb-4"><i class="fas fa-pills mr-2 text-cyan-500"></i> สรุปตารางยาปัจจุบัน (แยก ก่อน/หลังอาหาร)</h3>
+                <div id="pfe-med-mobile">
+                    <p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์การใช้ยา...</p>
+                </div>
+            </div>
+            
+            <div id="content-nutrition" class="tab-content">
+                <h3 class="text-lg font-bold text-gray-700 mb-4"><i class="fas fa-apple-alt text-lime-600 mr-2"></i> คำแนะนำโภชนาการสำหรับผู้ป่วยโรคไต</h3>
+                <div id="pfe-nutrition-tips" class="space-y-3">
+                    <p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์โภชนาการ...</p>
+                </div>
+            </div>
+
+            <div id="content-advice" class="tab-content">
+                <h3 class="text-lg font-bold text-gray-700 mb-2"><i class="fas fa-user-check mr-2 text-cyan-500"></i> การดูแลตนเองทั่วไป (คุมความดัน, ออกกำลังกาย)</h3>
+                <div id="pfe-general-tips" class="space-y-3">
+                    <p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์ข้อแนะนำ...</p>
+                </div>
+                
+                <h3 class="text-lg font-bold text-gray-700 mb-2 mt-6"><i class="fas fa-users text-indigo-700 mr-2"></i> ญาติช่วยสังเกตและสนับสนุน</h3>
+                <div id="pfe-relative-observation" class="space-y-3">
+                     <p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์ข้อแนะนำ...</p>
+                </div>
+                
+                <h3 class="text-lg font-bold text-gray-700 mb-2 mt-6"><i class="fas fa-exclamation-triangle text-rose-600 mr-2"></i> สัญญาณอันตรายที่ต้องพบแพทย์ทันที</h3>
+                <div id="pfe-red-flags-mobile" class="red-flag-card p-4">
+                    <p class="text-sm font-semibold text-center text-gray-500">กำลังรอผลวิเคราะห์สัญญาณอันตราย...</p>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------------------------------------------------------
+    // !!! สำคัญมาก: กรุณาเปลี่ยน API Key ตัวอย่างนี้เป็น Key จริงของคุณ ที่ได้จาก Google AI Studio !!!
+    // --------------------------------------------------------------------------------------------------
+    const apiKey = "AIzaSyBX4x_sffJXdjp5tpQGpTgMbNLipDGKOC8"; // Placeholder. Please use your actual key here.
+
+    // --- DOM Elements ---
+    const patientForm = document.getElementById('patient-form');
+    const outputSection = document.getElementById('output-section');
+    const generateBtn = document.getElementById('generate-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    // Tab Content Containers
+    const labTrendCards = document.getElementById('lab-trend-cards');
+    const pfeGoalMobile = document.getElementById('pfe-goal-mobile');
+    const pfeMedMobile = document.getElementById('pfe-med-mobile');
+    // NEW & REFINED Containers
+    const pfeNutritionTips = document.getElementById('pfe-nutrition-tips'); // Container for 3 nutrition sub-sections
+    const pfeGeneralTips = document.getElementById('pfe-general-tips');
+    const pfeRelativeObservation = document.getElementById('pfe-relative-observation');
+    const pfeRedFlagsMobile = document.getElementById('pfe-red-flags-mobile');
+    const toggleInputBtn = document.getElementById('toggle-input-btn');
+    const inputFormWrapper = document.getElementById('input-form-wrapper');
+
+
+    // --- Gemini API Configuration ---
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    // --- Utility Functions (UNCHANGED: syncDates, serializeFormData, fetchWithRetry, switchTab) ---
+
+    function syncDates() {
+        document.getElementById('latest-date-display').textContent = document.getElementById('lab_date_5').value;
+    }
+
+    function serializeFormData(form) {
+        const formData = new FormData(form);
+        const data = {};
+        const lang = formData.get('documentLanguage');
+
+        // 1. Patient Demographic & History
+        data.demographic = {
+            name: formData.get('name'),
+            underlying: formData.get('underlying'),
+            language: lang,
+        };
+
+        // 2. Visit History
+        data.visits = [];
+        for (let i = 5; i >= 1; i--) { 
+            data.visits.push({
+                index: i,
+                date: formData.get(`visitDate_${i}`), 
+                ccPi: formData.get(`ccPi_${i}`),
+                med: formData.get(`med_${i}`),
+                isCurrent: i === 5 
+            });
+        }
+        
+        // 3. Lab data
+        const labPrefixes = ['d1', 'd2', 'd3', 'd4', 'd5']; 
+        const labKeys = ['egfr', 'k', 'phos', 'hb', 'a1c', 'creatinine', 'bun', 'albumin']; 
+        
+        data.labs = { dates: {} };
+        labKeys.forEach(key => data.labs[key] = {}); 
+
+        labKeys.forEach(key => {
+            labPrefixes.forEach((prefix, index) => {
+                data.labs[key][prefix] = formData.get(`lab_${key}_${prefix}`);
+            });
+        });
+
+        labPrefixes.forEach((prefix, index) => {
+             data.labs.dates[prefix] = formData.get(`lab_date_${index + 1}`); 
+        });
+        
+        return data;
+    }
+    
+    // Exponential Backoff for Retries
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.ok) return response;
+                else if (response.status === 429 && i < maxRetries - 1) {
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    const errorBody = await response.text();
+                    throw new Error(`API returned status ${response.status}: ${response.statusText}. Body: ${errorBody.substring(0, 150)}...`);
+                }
+            } catch (error) {
+                if (i === maxRetries - 1 || error.message.includes('400')) throw error;
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+    
+    // --- Tab Switching Logic ---
+    function switchTab(tabId) {
+        const tabs = document.querySelectorAll('#tab-nav .tab-button');
+        const contents = document.querySelectorAll('#tab-content-container .tab-content');
+
+        tabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.tab === tabId) {
+                tab.classList.add('active');
+            }
+        });
+
+        contents.forEach(content => {
+            content.classList.remove('active');
+            if (content.id === `content-${tabId}`) {
+                content.classList.add('active');
+            }
+        });
+    }
+
+    /**
+     * Splits the pfe_text generated by AI into Nutrition (3 parts) and General Care sections
+     * based on the expected Markdown headers. (UPDATED FOR 3 NUTRITION SUB-SECTIONS)
+     */
+    function splitPfeContent(pfeText) {
+        const sections = { 
+            diet_restricted: '', 
+            diet_recommended: '', 
+            diet_general: '', 
+            general: '' 
+        };
+        if (!pfeText) return sections;
+
+        // 1. Separate General Care from the rest
+        const generalMatch = pfeText.match(/##\s*การดูแลทั่วไป([\s\S]*)/i);
+        if (generalMatch) {
+            // [1] captures the content after the header
+            sections.general = generalMatch[1].trim(); 
+        }
+        
+        // Remove General Care section and '## โภชนาการ' header to isolate Diet content
+        let dietText = pfeText.replace(generalMatch ? generalMatch[0] : '', '').trim();
+        dietText = dietText.replace(/##\s*โภชนาการ/i, '').trim();
+
+        // 2. Separate Diet content into 3 sub-sections using the expected sub-headers
+        if (dietText) {
+            // Capture content after '### อาหารที่ควรหลีกเลี่ยง/จำกัด' up to the next ### header or end of string
+            const restrictedMatch = dietText.match(/###\s*อาหารที่ควรหลีกเลี่ยง\/จำกัด([\s\S]*?)(?=###\s*อาหารที่แนะนำ|###\s*คำแนะนำโภชนาการทั่วไป|$)/i);
+            if (restrictedMatch) {
+                 sections.diet_restricted = restrictedMatch[1].trim();
+            }
+            
+            // Capture content after '### อาหารที่แนะนำ' up to the next ### header or end of string
+            const recommendedMatch = dietText.match(/###\s*อาหารที่แนะนำ([\s\S]*?)(?=###\s*คำแนะนำโภชนาการทั่วไป|$)/i);
+            if (recommendedMatch) {
+                 sections.diet_recommended = recommendedMatch[1].trim();
+            }
+
+            // Capture content after '### คำแนะนำโภชนาการทั่วไป' up to the end of string
+            const generalDietMatch = dietText.match(/###\s*คำแนะนำโภชนาการทั่วไป([\s\S]*)/i);
+            if (generalDietMatch) {
+                 sections.diet_general = generalDietMatch[1].trim();
+            }
+        }
+
+        return sections;
+    }
+
+
+    // --- Infographic Rendering Functions ---
+    
+    /**
+     * Renders a key Lab trend card (eGFR, Phos, Hb) - UNCHANGED
+     */
+    function renderKeyLabTrendCard(label, unit, latestValue, initialValue, target, isBadIfLower) {
+        const latest = parseFloat(latestValue.replace(/[^\d.]/g, ''));
+        const initial = parseFloat(initialValue.replace(/[^\d.]/g, ''));
+        
+        if (isNaN(latest) || isNaN(initial)) return '';
+
+        let trendIconClass = 'fas fa-equals';
+        let trendText = 'คงที่';
+        let cardClass = 'trend-neutral';
+        let textColor = 'text-gray-700';
+        
+        // Determine Trend
+        if (latest < initial) {
+            trendIconClass = 'fas fa-arrow-down';
+            trendText = isBadIfLower ? 'แย่ลง' : 'ดีขึ้น';
+            cardClass = isBadIfLower ? 'trend-bad' : 'trend-good';
+            textColor = isBadIfLower ? 'text-rose-600' : 'text-emerald-600';
+        } else if (latest > initial) {
+            trendIconClass = 'fas fa-arrow-up';
+            trendText = isBadIfLower ? 'ดีขึ้น' : 'แย่ลง';
+            cardClass = isBadIfLower ? 'trend-good' : 'trend-bad';
+            textColor = isBadIfLower ? 'text-emerald-600' : 'text-rose-600';
+        }
+        
+        // Custom Text for Clarity
+        if (label === 'eGFR') {
+            trendText = (latest < initial) ? 'ไตเสื่อมลง' : ((latest > initial) ? 'ไตดีขึ้น' : 'คงที่');
+        } else if (label === 'Phos') {
+            trendText = (latest < initial) ? 'ฟอสฟอรัสลด' : ((latest > initial) ? 'ฟอสฟอรัสสูง' : 'คงที่');
+        } else if (label === 'Hb') {
+            trendText = (latest < initial) ? 'ซีดลง' : ((latest > initial) ? 'ดีขึ้น' : 'คงที่');
+        }
+
+        const customIconColor = cardClass === 'trend-neutral' ? 'text-gray-500' : textColor;
+        
+        return `
+            <div class="trend-card ${cardClass}" title="Visit 1: ${initialValue}">
+                <div class="trend-value ${textColor}">${latestValue}</div>
+                <div class="trend-label">${label} (${unit})</div>
+                <div class="text-sm font-semibold mt-2 flex items-center justify-center">
+                    <i class="${trendIconClass} ${customIconColor} text-sm mr-1"></i>
+                    <span class="${customIconColor}">${trendText}</span>
+                </div>
+                 <div class="text-xs text-gray-500 mt-1">(เป้าหมาย ${target})</div>
+            </div>
+        `;
+    }
+
+    /**
+     * Renders medication cards separating before/after meal - UNCHANGED
+     */
+    function renderSimpleMedicationCard(patientData) {
+        const medText = patientData.visits.find(v => v.isCurrent).med || '';
+        const MEAL_KEYS = ['เช้า', 'กลางวัน', 'เย็น', 'ก่อนนอน'];
+        
+        const meals = {};
+        MEAL_KEYS.forEach(key => meals[key] = { after: [], before: [], rawMeds: '' });
+        let prnMed = '';
+
+        medText.split('\n').map(line => line.trim()).filter(line => line).forEach(line => {
+            const parts = line.split(':');
+            
+            if (line.toUpperCase().includes('PRN')) {
+                prnMed = line.replace(/ยา\s*PRN\s*:\s*|PRN\s*:/i, '').trim() || 'ไม่มี';
+                return;
+            }
+
+            if (parts.length < 2) {
+                const beforeBedMatch = line.match(/^(ก่อนนอน)\s*(.*)/); 
+                if (beforeBedMatch) {
+                    meals['ก่อนนอน'].rawMeds = beforeBedMatch[2].trim();
+                }
+                return;
+            }
+
+            const mealTimeInput = parts[0].trim(); 
+            const medsList = parts[1].trim(); 
+            
+            const match = mealTimeInput.match(/^(เช้า|กลางวัน|เย็น|ก่อนนอน)\s*(\((ก่อนอาหาร|หลังอาหาร)\))?/);
+            
+            if (match) {
+                const mealTime = match[1]; 
+                const timing = match[3]; 
+
+                if (MEAL_KEYS.includes(mealTime)) {
+                    if (timing === 'ก่อนอาหาร') {
+                        meals[mealTime].before.push(medsList);
+                    } else if (timing === 'หลังอาหาร') {
+                        meals[mealTime].after.push(medsList);
+                    } else if (mealTime === 'ก่อนนอน') {
+                        meals[mealTime].rawMeds = medsList;
+                    } else {
+                        meals[mealTime].after.push(medsList);
+                    }
+                }
+            }
+        });
+        
+        MEAL_KEYS.forEach(meal => {
+            if (Array.isArray(meals[meal].before)) meals[meal].before = meals[meal].before.join(', ');
+            if (Array.isArray(meals[meal].after)) meals[meal].after = meals[meal].after.join(', ');
+        });
+
+        const icons = { 'เช้า': 'fas fa-cloud-sun', 'กลางวัน': 'fas fa-utensils', 'เย็น': 'fas fa-cloud-moon', 'ก่อนนอน': 'fas fa-bed' };
+        const mealClasses = { 'เช้า': 'med-morning', 'กลางวัน': 'med-day', 'เย็น': 'med-evening', 'ก่อนนอน': 'med-bed' };
+
+        let html = `
+            <div class="space-y-3">
+        `;
+        
+        ['เช้า', 'กลางวัน', 'เย็น'].forEach(meal => {
+            const medsBefore = meals[meal].before;
+            const medsAfter = meals[meal].after;
+            
+            if (medsBefore.length > 0 || medsAfter.length > 0) {
+                 html += `
+                    <div class="p-3 ${mealClasses[meal]} rounded-xl border-l-4 shadow-md">
+                        <div class="flex items-center mb-2">
+                           <i class="${icons[meal]} mr-3 text-xl"></i>
+                           <p class="font-extrabold text-lg">${meal}</p>
+                        </div>
+                        
+                        ${medsBefore.length > 0 ? `
+                            <div class="ml-2 mt-2 p-2 rounded-lg bg-white border border-blue-200">
+                                <p class="font-bold text-xs text-blue-700 mb-1"><i class="fas fa-clock mr-1"></i> ทานก่อนอาหาร</p>
+                                <p class="text-xs text-gray-700 pl-3">${medsBefore}</p>
+                            </div>
+                        ` : ''}
+
+                        ${medsAfter.length > 0 ? `
+                            <div class="ml-2 mt-2 p-2 rounded-lg bg-white border border-green-200">
+                                <p class="font-bold text-xs text-green-700 mb-1"><i class="fas fa-bread-slice mr-1"></i> ทานหลังอาหาร</p>
+                                <p class="text-xs text-gray-700 pl-3">${medsAfter}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+        });
+        
+        if (meals['ก่อนนอน'].rawMeds) {
+             html += `
+                <div class="p-3 ${mealClasses['ก่อนนอน']} rounded-xl border-l-4 shadow-md">
+                    <div class="flex items-center mb-2">
+                       <i class="${icons['ก่อนนอน']} mr-3 text-xl"></i>
+                       <p class="font-extrabold text-lg">ก่อนนอน</p>
+                    </div>
+                     <div class="ml-2 mt-2 p-2 rounded-lg bg-white border border-purple-200">
+                        <p class="font-bold text-xs text-purple-700 mb-1"><i class="fas fa-moon mr-1"></i> ทานก่อนเข้านอน</p>
+                        <p class="text-xs text-gray-700 pl-3">${meals['ก่อนนอน'].rawMeds}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (prnMed) {
+             html += `
+                <div class="p-3 med-prn rounded-xl border-l-4 flex items-center shadow-md">
+                    <i class="fas fa-first-aid text-orange-700 mr-3 text-lg"></i>
+                    <div class="ml-2">
+                        <p class="font-semibold text-sm">ยาใช้ตามอาการ (PRN)</p>
+                        <p class="text-xs text-orange-800 font-medium">${prnMed}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+             html += `<p class="text-center text-sm text-gray-400 p-4 border rounded-lg">ไม่มีรายการยาใช้ตามอาการ (PRN)</p>`;
+        }
+
+
+        html += `</div>`;
+        return html;
+    }
+
+    /**
+     * Renders AI PFE/Tips content into visual tip cards (Uses simple markdown list text as input)
+     * Title is handled by the caller h4 tag.
+     */
+    function renderInfographicTipCard(content, iconClass, cardColor) {
+        if (!content || !content.trim()) return '';
+
+        let htmlContent = '';
+        // Split by line and filter empty lines
+        const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+        
+        lines.forEach((line) => {
+             // Clean markdown list prefixes (*, -, 1.) and ignore headers (##, ###)
+             const cleanLine = line.replace(/^([*-]|\d+\.)\s*/, '').trim();
+             if (cleanLine.startsWith('#')) return; 
+             
+             if (cleanLine) {
+                 htmlContent += `
+                    <div class="info-tip-card" style="border-left-color: ${cardColor};">
+                        <i class="${iconClass}" style="color: ${cardColor};"></i>
+                        <p class="text-sm text-gray-700 font-medium">${cleanLine}</p>
+                    </div>
+                 `;
+             }
+        });
+        
+        return htmlContent;
+    }
+
+    /**
+     * Renders simplified Treatment Plan & Goal for mobile - UNCHANGED
+     */
+    function generateTreatmentPlanHtmlMobile(planData) {
+        if (!planData || !planData.goal || !planData.phases || planData.phases.length === 0) {
+            return `<p class="text-red-500 font-medium text-sm">ไม่สามารถสร้างแผนการรักษาและเป้าหมายได้</p>`;
+        }
+        
+        const progress = Math.min(100, Math.max(0, parseInt(planData.progress) || 0));
+        let progressColor = progress >= 70 ? 'bg-emerald-500' : (progress >= 30 ? 'bg-amber-500' : 'bg-rose-500');
+        
+        let phasesHtml = planData.phases.map((phase, index) => `
+            <div class="plan-phase-card-mobile shadow-sm">
+                <p class="font-bold text-sm text-blue-700 mb-1"><i class="fas fa-check-circle mr-2 text-blue-400"></i> ${phase.time || `Phase ${index + 1}`}</p>
+                <p class="text-xs text-gray-700 ml-5">${phase.description || 'รายละเอียดแผนการรักษา'}</p>
+            </div>
+        `).join('');
+        
+        return `
+            <div class="font-bold text-lg text-indigo-700 mb-2">เป้าหมายหลัก: <span class="font-medium text-gray-800 text-base">${planData.goal}</span></div>
+            <div class="text-xs text-gray-600 mb-2">ความคืบหน้าของแผนการรักษา: <span class="font-bold text-base text-indigo-600">${progress}%</span></div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div class="${progressColor} h-2.5 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+            </div>
+            
+            <h4 class="font-bold text-base mb-2 text-indigo-800">แผนดำเนินการ:</h4>
+            ${phasesHtml}
+        `;
+    }
+
+    // --- Main Logic ---
+    async function generateDocuments(event) {
+        event.preventDefault();
+        
+        generateBtn.disabled = true;
+        loadingSpinner.classList.remove('hidden');
+        
+        const patientData = serializeFormData(event.target);
+        
+        // Update basic info on card
+        document.getElementById('patient-name-display').textContent = patientData.demographic.name.split(' (')[0]; 
+        document.getElementById('patient-underlying-display').textContent = patientData.demographic.underlying;
+        syncDates(); 
+        
+        // Reset output sections (set loading state)
+        labTrendCards.innerHTML = '<p class="text-sm col-span-3 text-center text-gray-400">กำลังประมวลผล Lab...</p>';
+        pfeGoalMobile.innerHTML = '<p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์แผนการรักษา...</p>';
+        pfeMedMobile.innerHTML = '<p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์การใช้ยา...</p>';
+        pfeNutritionTips.innerHTML = '<p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์โภชนาการ...</p>';
+        pfeGeneralTips.innerHTML = '<p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์ข้อแนะนำ...</p>';
+        pfeRelativeObservation.innerHTML = '<p class="text-sm text-center text-gray-500">กำลังรอผลวิเคราะห์ข้อแนะนำ...</p>';
+        pfeRedFlagsMobile.innerHTML = '<p class="text-sm font-semibold text-center text-gray-500">กำลังรอผลวิเคราะห์สัญญาณอันตราย...</p>';
+
+        // 1. Generate Lab Trend Cards (Client-side) - Goes to Summary Tab
+        labTrendCards.innerHTML = 
+            renderKeyLabTrendCard('eGFR', 'mL/min', patientData.labs.egfr.d5, patientData.labs.egfr.d1, '< 30', true) +
+            renderKeyLabTrendCard('Phos', 'mg/dL', patientData.labs.phos.d5, patientData.labs.phos.d1, '< 4.5', false) +
+            renderKeyLabTrendCard('Hb', 'g/dL', patientData.labs.hb.d5, patientData.labs.hb.d1, '10-11.5', true);
+            
+        // 2. Generate Medication Cards (Client-side) - Goes to Medication Tab
+        pfeMedMobile.innerHTML = renderSimpleMedicationCard(patientData);
+        
+        // 3. Create Prompt for AI (UPDATED: Requesting clear Markdown headings for Diet and General Care)
+        const prompt = `คุณคือผู้ช่วยแพทย์ที่เชี่ยวชาญด้าน **โรคไตเรื้อรัง (CKD)** โปรดสร้างเอกสารให้ความรู้แก่ผู้ป่วย (PFE) ในรูปแบบ JSON ที่ถูกต้องตาม Schema ที่กำหนดเท่านั้น โดยใช้ภาษาที่ **อ่อนโยน ให้กำลังใจ และง่ายต่อความเข้าใจสำหรับผู้ป่วยไต (Easy-to-understand for kidney patients)** เน้นการอธิบายอาการให้ชัดเจน โดยเฉพาะเมื่อกล่าวถึง 'บวม' (swelling) ให้ระบุตำแหน่งที่พบบ่อย เช่น **บวมที่เท้า, บวมที่ขา, หรือบวมที่หนังตา** โปรดจำกัดคำ/ประโยคให้สั้น เหมาะสำหรับ Mobile Infographic\n\n
+        กฎการสร้าง JSON: {\"pfe_text\": \"...\", \"treatment_plan\": {...}, \"relative_observation\": \"...\", \"red_flags\": \"...\"}\n
+        * pfe_text: สรุปหัวข้อสำคัญในการดูแลตนเอง โปรดใช้รูปแบบ Markdown ที่มีหัวข้อหลัก **## โภชนาการ** และ **## การดูแลทั่วไป** ภายใต้หัวข้อ **## โภชนาการ** ต้องแยกเป็น 3 หัวข้อรอง: **### อาหารที่ควรหลีกเลี่ยง/จำกัด**, **### อาหารที่แนะนำ**, และ **### คำแนะนำโภชนาการทั่วไป** แต่ละหัวข้อรองควรตามด้วยรายการ (* หรือ -) ที่สั้นและง่ายต่อการเข้าใจ\n
+        * treatment_plan: สร้างแผนการรักษา (goal, progress เป็น Integer 0-100, phases เป็น Array)\n
+        * relative_observation: **สิ่งที่ญาติควรสังเกตและให้การสนับสนุน** เป็น **รายการสั้นๆ** (* หรือ -)\n
+        * red_flags: **อาการที่ควรมาพบแพทย์ทันที** เป็น **รายการสั้นๆ** (* หรือ -)\n\n
+        
+        ### ข้อมูลผู้ป่วย ###
+        ชื่อ: ${patientData.demographic.name} | โรคประจำตัว: ${patientData.demographic.underlying}
+        eGFR (Visit 1 -> 5): ${patientData.labs.egfr.d1} -> ${patientData.labs.egfr.d5} | Phos: ${patientData.labs.phos.d5} | Hb: ${patientData.labs.hb.d5}
+        CC ล่าสุด: ${patientData.visits.find(v => v.isCurrent).ccPi}
+        ยาที่ได้รับ: ${patientData.visits.find(v => v.isCurrent).med}
+        
+        **โปรดสร้าง JSON ตามโครงสร้างและกฎที่กำหนดเท่านั้น**`;
+
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: {
+                parts: [{ text: `You are a professional medical assistant. Provide the response ONLY in JSON format, strictly following the specified schema. The output must be in Thai.` }]
+            },
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: { 
+                    type: "OBJECT",
+                    properties: {
+                        "pfe_text": { "type": "STRING" },
+                        "treatment_plan": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "goal": { "type": "STRING" },
+                                "progress": { "type": "INTEGER" },
+                                "phases": { 
+                                    "type": "ARRAY", 
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "time": { "type": "STRING" },
+                                            "description": { "type": "STRING" }
+                                        },
+                                        "required": ["time", "description"]
+                                    },
+                                }
+                            },
+                            "required": ["goal", "progress", "phases"]
+                        },
+                        "relative_observation": { "type": "STRING" }, 
+                        "red_flags": { "type": "STRING" } 
+                    },
+                    "required": ["pfe_text", "treatment_plan", "relative_observation", "red_flags"]
+                }
+            }
+        };
+
+        try {
+            const response = await fetchWithRetry(GEMINI_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!jsonText) throw new Error("AI did not return structured text content.");
+            
+            const cleanedJsonString = jsonText.trim().replace(/^```json\s*|```\s*$/g, '').trim();
+            const firstBrace = cleanedJsonString.indexOf('{');
+            const lastBrace = cleanedJsonString.lastIndexOf('}');
+            const finalJsonString = cleanedJsonString.substring(firstBrace, lastBrace + 1);
+            const aiResponse = JSON.parse(finalJsonString);
+            
+            // --- Content Separation ---
+            const pfeSections = splitPfeContent(aiResponse.pfe_text);
+            
+            // 4. Render AI Content into Tab Content
+            
+            // 4.1 Treatment Plan (Goes to Summary Tab)
+            if (aiResponse.treatment_plan) {
+                pfeGoalMobile.innerHTML = generateTreatmentPlanHtmlMobile(aiResponse.treatment_plan);
+            }
+            
+            // 4.2 Red Flags (Goes to Advice Tab)
+            pfeRedFlagsMobile.innerHTML = aiResponse.red_flags ? 
+                renderInfographicTipCard(aiResponse.red_flags, 'fas fa-ambulance', '#ef4444') : 
+                '<p class="text-sm font-semibold text-center text-gray-500">ไม่มีสัญญาณอันตรายฉุกเฉิน</p>';
+
+            // 4.3 Nutrition Tips (Goes to Nutrition Tab)
+            let nutritionHtml = '';
+            
+            // Restricted Foods (Red)
+            nutritionHtml += `<h4 class="font-bold text-base mb-2 mt-4 text-rose-700"><i class="fas fa-ban mr-2"></i> 1. รายการอาหารที่ควรหลีกเลี่ยง/จำกัด</h4>`;
+            nutritionHtml += renderInfographicTipCard(pfeSections.diet_restricted, 'fas fa-ban', '#ef4444'); 
+
+            // Recommended Foods (Green)
+            nutritionHtml += `<h4 class="font-bold text-base mb-2 mt-6 text-emerald-700"><i class="fas fa-hand-holding-heart mr-2"></i> 2. อาหารที่แนะนำให้ทาน</h4>`;
+            nutritionHtml += renderInfographicTipCard(pfeSections.diet_recommended, 'fas fa-hand-holding-heart', '#10b981'); 
+
+            // General Diet Advice (Teal/Cyan)
+            nutritionHtml += `<h4 class="font-bold text-base mb-2 mt-6 text-cyan-700"><i class="fas fa-utensils mr-2"></i> 3. คำแนะนำโภชนาการทั่วไป</h4>`;
+            nutritionHtml += renderInfographicTipCard(pfeSections.diet_general, 'fas fa-utensils', '#06b6d4'); 
+            
+            pfeNutritionTips.innerHTML = nutritionHtml || '<p class="text-sm text-center text-gray-500">ไม่พบคำแนะนำด้านโภชนาการเฉพาะ</p>';
+            
+            // 4.4 General Tips (Goes to Advice Tab)
+            pfeGeneralTips.innerHTML = pfeSections.general ? 
+                renderInfographicTipCard(pfeSections.general, 'fas fa-heartbeat', '#0ea5e9') : // Sky Blue
+                '<p class="text-sm text-center text-gray-500">ไม่พบคำแนะนำการดูแลตนเองทั่วไป</p>';
+            
+            // 4.5 Relative Observation (Goes to Advice Tab)
+            pfeRelativeObservation.innerHTML = aiResponse.relative_observation ? 
+                renderInfographicTipCard(aiResponse.relative_observation, 'fas fa-users', '#4f46e5') : // Indigo
+                '<p class="text-sm text-center text-gray-500">ไม่พบคำแนะนำสำหรับญาติ</p>';
+
+
+        } catch (error) {
+            console.error("Error generating AI documents (Mobile Infographic):", error);
+            const errorMessage = `<p class="text-rose-600 font-bold p-2 bg-rose-100 rounded text-sm"><i class="fas fa-exclamation-circle mr-1"></i> เกิดข้อผิดพลาดในการเรียกใช้ AI: ${error.message}</p><p class="mt-1 text-xs text-gray-500">โปรดตรวจสอบ API Key หรือรูปแบบข้อมูลใน Input Form</p>`;
+            // Display error in the Goal/Progress section of the Summary Tab
+            pfeGoalMobile.innerHTML = errorMessage;
+            // Clear other AI generated sections with an error message
+            pfeRedFlagsMobile.innerHTML = '<i class="fas fa-bug text-rose-600 mr-1"></i> มีข้อผิดพลาดในการโหลดข้อมูล';
+            pfeNutritionTips.innerHTML = '<i class="fas fa-bug text-rose-600 mr-1"></i> มีข้อผิดพลาดในการโหลดข้อมูล';
+            pfeGeneralTips.innerHTML = '<i class="fas fa-bug text-rose-600 mr-1"></i> มีข้อผิดพลาดในการโหลดข้อมูล';
+            pfeRelativeObservation.innerHTML = '<i class="fas fa-bug text-rose-600 mr-1"></i> มีข้อผิดพลาดในการโหลดข้อมูล';
+        } finally {
+            generateBtn.disabled = false;
+            loadingSpinner.classList.add('hidden');
+            outputSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+    
+    // --- Event Listeners ---
+    document.addEventListener('DOMContentLoaded', () => {
+        syncDates(); 
+        document.getElementById('patient-name-display').textContent = document.getElementById('name').value.split(' (')[0]; 
+        document.getElementById('patient-underlying-display').textContent = document.getElementById('underlying').value;
+        
+        // Initial call to generate documents on load (since this is a fixed demo)
+        document.getElementById('patient-form').dispatchEvent(new Event('submit'));
+        
+        // Tab switching event listener
+        document.querySelectorAll('#tab-nav .tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                switchTab(button.dataset.tab);
+            });
+        });
+        
+        // Toggle input form visibility
+        toggleInputBtn.addEventListener('click', () => {
+             inputFormWrapper.classList.toggle('hidden');
+             if(!inputFormWrapper.classList.contains('hidden')) {
+                  inputFormWrapper.scrollIntoView({ behavior: 'smooth' });
+             }
+        });
+    });
+    patientForm.addEventListener('submit', generateDocuments);
+
+</script>
+
+</body>
+</html>
